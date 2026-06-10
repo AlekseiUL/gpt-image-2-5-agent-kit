@@ -42,11 +42,11 @@ gpt-image2-agent "portrait of a calm technical operator" \
   --json
 ```
 
-Use a reference image in the plan:
+Use a reference image in the plan. This repository intentionally does not include real face references; replace the path with your own local image:
 
 ```bash
 gpt-image2-agent "make a cinematic Telegram avatar in the same likeness" \
-  --ref examples/refs/sample-face-placeholder.png \
+  --ref path/to/your-reference.png \
   --preset likeness \
   --dry-run
 ```
