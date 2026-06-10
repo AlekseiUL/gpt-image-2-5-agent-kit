@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -21,7 +22,12 @@ def read_token(*, provider: str, token_env: str = "CHATGPT_CODEX_ACCESS_TOKEN", 
         if not token_command:
             raise AuthError("--token-command is required for command auth provider")
         try:
-            completed = subprocess.run(token_command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, check=False)
+            argv = shlex.split(token_command)
+            if not argv:
+                raise AuthError("token command is empty")
+            completed = subprocess.run(argv, shell=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, check=False)
+        except AuthError:
+            raise
         except Exception as exc:
             raise AuthError(f"token command failed: {type(exc).__name__}") from exc
         if completed.returncode != 0:

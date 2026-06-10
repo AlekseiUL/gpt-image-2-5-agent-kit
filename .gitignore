@@ -5,6 +5,7 @@ __pycache__/
 .env
 .env.*
 generated/
+.gpt-image2-agent/
 dist/
 build/
 *.egg-info/

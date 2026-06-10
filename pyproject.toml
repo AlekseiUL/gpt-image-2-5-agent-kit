@@ -12,6 +12,15 @@ license = "MIT"
 authors = [{name = "Aleksei Ulianov / Sprut_AI"}]
 dependencies = ["httpx>=0.25"]
 keywords = ["gpt-image-2", "ai-agents", "image-generation", "prompting", "reference-images"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Multimedia :: Graphics",
+]
+
+[project.urls]
+Homepage = "https://github.com/AlekseiUL/gpt-image-2-agent-kit"
+Issues = "https://github.com/AlekseiUL/gpt-image-2-agent-kit/issues"
 
 [project.optional-dependencies]
 test = ["pytest>=8"]

@@ -100,6 +100,7 @@ def validate_refs(refs: list[Path], *, root: Path, allow_outside: bool) -> list[
             raise PolicyError(f"Reference image not found: {path}")
         if path.suffix.lower() not in IMAGE_EXTS:
             raise PolicyError(f"Unsupported reference image extension: {path}. Use png/jpg/webp.")
+        image_kind_from_bytes(path)
         size = path.stat().st_size
         if size > MAX_REF_BYTES:
             raise PolicyError(f"Reference too large: {path} ({size} bytes > {MAX_REF_BYTES})")
@@ -110,7 +111,19 @@ def validate_refs(refs: list[Path], *, root: Path, allow_outside: bool) -> list[
     return resolved
 
 
+def image_kind_from_bytes(path: Path) -> str:
+    header = path.read_bytes()[:16]
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if header.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+        return "webp"
+    raise PolicyError(f"Reference image content is not png/jpg/webp: {path}")
+
+
 def mime_for(path: Path) -> str:
+    image_kind_from_bytes(path)
     mime, _ = mimetypes.guess_type(str(path))
     if mime in {"image/png", "image/jpeg", "image/webp"}:
         return mime

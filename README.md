@@ -4,10 +4,23 @@ A local-first toolkit for agents and operators who want a safer GPT Image 2 work
 
 It is built from the lessons of an internal designer-agent workflow, but this public repo is sanitized: no private paths, no private facepack, no tokens, no internal agent names.
 
+## Why this exists
+
+Most image tools optimize for a human clicking a UI. This kit optimizes for an AI agent that must be safe before it spends quota or touches private references.
+
+The flow is:
+
+```text
+request -> prompt plan -> identity/style/edit references -> dry-run -> receipt -> optional live generation
+```
+
 ## What it does
 
 - Turns a short request into a stronger image-generation prompt with reusable presets.
-- Supports optional reference images for likeness, style, logo, composition, or product context.
+- Supports optional reference images for likeness, style, logo, composition, edits, or product context.
+- Creates saved local identity packs, so an agent can later use `--identity me` instead of asking for the same face references again.
+- Creates saved local style packs for brandbooks, creator styles, art direction and campaign look.
+- Supports edit mode: pass a base image and ask what to change while preserving the rest.
 - Uses dry-run by default so agents can inspect the plan before spending quota.
 - Writes outputs only inside a configured safe root unless you explicitly override it.
 - Produces JSON receipts with hashes/metadata, not raw secrets or image bytes.
@@ -82,8 +95,59 @@ Privacy note: in live mode, prompts and reference images are uploaded to the con
 - `product` — product/landing hero image.
 - `no-text` — explicitly avoids generated text.
 - `russian-text` — if text is needed, asks for short readable Cyrillic and clean typography.
+- `edit` — preserve the base image while changing only the requested part.
+- `brand-style` — follow a saved or supplied style system.
 
 Presets are prompt additions, not magic. Check the final dry-run prompt before live generation.
+
+## Saved identities, styles and edits
+
+Create a saved identity from local references:
+
+```bash
+gpt-image2-agent --root . --add-identity me \
+  --ref refs/me-front.png \
+  --ref refs/me-side.png
+```
+
+Use it later:
+
+```bash
+gpt-image2-agent "make a cinematic image with me in a black technical studio" \
+  --identity me \
+  --preset likeness \
+  --dry-run
+```
+
+Create and reuse a style pack:
+
+```bash
+gpt-image2-agent --root . --add-style graphite-brand \
+  --style-prompt "dark graphite palette, clean premium lighting" \
+  --style-preset brand-style \
+  --ref refs/style-board.png
+
+gpt-image2-agent "hero image for an AI automation course" \
+  --style graphite-brand \
+  --preset product \
+  --dry-run
+```
+
+Edit an existing image:
+
+```bash
+gpt-image2-agent \
+  --edit-image generated/source.png \
+  --edit "remove the background, keep the person and lighting" \
+  --dry-run
+```
+
+More detail:
+
+- `docs/identity-style-edit-workflows.md`
+- `docs/comparison.md`
+- `docs/security-model.md`
+- `docs/receipt-schema.md`
 
 ## Safety model
 
@@ -145,7 +209,10 @@ Where permitted by the applicable license, if you reuse, fork, modify, package, 
 
 - улучшать запрос через готовые пресеты;
 - работать с референсами лица, стиля, продукта или композиции;
-- делать `dry-run` без токена, сети и записи файла;
+- сохранять локальные identity packs: один раз добавили свои фото, потом агент может использовать `--identity me`;
+- сохранять style packs: брендбук, визуальный стиль, moodboard, стиль автора;
+- работать в edit mode: взять исходную картинку и изменить только то, что попросили;
+- делать `dry-run` без токена, сети и записи результата;
 - писать результат только в безопасную папку;
 - сохранять receipt без токенов и без сырых картинок;
 - запускать live-генерацию только когда вы сами передали доступ.

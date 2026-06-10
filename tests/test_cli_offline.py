@@ -170,3 +170,71 @@ def test_receipt_can_include_prompt_explicitly(tmp_path):
     assert proc.returncode == 0
     data = json.loads(receipt.read_text())
     assert data["prompt"].startswith("public prompt text")
+
+
+
+def jpg(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"\xff\xd8\xff\xe0" + b"0" * 16)
+    return path
+
+
+def test_ref_magic_bytes_reject_fake_png(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    fake = root / "fake.png"
+    fake.write_text("not an image", encoding="utf-8")
+    with pytest.raises(f.PolicyError):
+        f.validate_refs([fake], root=root, allow_outside=False)
+
+
+def test_cli_add_identity_then_use_it_in_dry_run(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    ref = png(root / "me.png")
+    proc = run_cli(["--root", str(root), "--add-identity", "me", "--ref", str(ref), "--json"], cwd=Path.cwd())
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    created = json.loads(proc.stdout)
+    assert created["created"] == "identity"
+    proc = run_cli(["make image with me", "--root", str(root), "--identity", "me", "--preset", "likeness", "--dry-run", "--json"], cwd=Path.cwd())
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    payload = json.loads(proc.stdout)
+    assert payload["refs_count"] == 1
+    assert "Saved identity pack selected: me" in payload["final_prompt"]
+
+
+def test_cli_add_style_then_use_it_with_refs(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    ref = jpg(root / "style.jpg")
+    proc = run_cli(["--root", str(root), "--add-style", "dark-brand", "--style-prompt", "dark graphite palette", "--style-preset", "brand-style", "--ref", str(ref), "--json"], cwd=Path.cwd())
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    proc = run_cli(["product poster", "--root", str(root), "--style", "dark-brand", "--dry-run", "--json"], cwd=Path.cwd())
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    payload = json.loads(proc.stdout)
+    assert payload["refs_count"] == 1
+    assert "dark graphite palette" in payload["final_prompt"]
+    assert "Saved style pack selected: dark-brand" in payload["final_prompt"]
+
+
+def test_cli_edit_image_adds_edit_guidance_and_ref(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    base = png(root / "base.png")
+    proc = run_cli(["--root", str(root), "--edit-image", str(base), "--edit", "remove the background and keep the face", "--dry-run", "--json"], cwd=Path.cwd())
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    payload = json.loads(proc.stdout)
+    assert payload["refs_count"] == 1
+    assert "Treat the supplied edit/base image" in payload["final_prompt"]
+    assert payload["receipt"]["edit_image"] == str(base)
+
+
+def test_list_library(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    ref = png(root / "me.png")
+    assert run_cli(["--root", str(root), "--add-identity", "me", "--ref", str(ref)], cwd=Path.cwd()).returncode == 0
+    proc = run_cli(["--root", str(root), "--list-library", "--json"], cwd=Path.cwd())
+    assert proc.returncode == 0
+    payload = json.loads(proc.stdout)
+    assert payload["library"]["identities"] == ["me"]
