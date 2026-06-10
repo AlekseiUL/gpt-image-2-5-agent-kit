@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gpt-image-2-agent-kit"
+version = "0.1.0"
+description = "Local-first GPT Image 2 prompt/reference-image toolkit for agents."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Aleksei Ulianov / Sprut_AI"}]
+dependencies = ["httpx>=0.25"]
+keywords = ["gpt-image-2", "ai-agents", "image-generation", "prompting", "reference-images"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+gpt-image2-agent = "gpt_image2_agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

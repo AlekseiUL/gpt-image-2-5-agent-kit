@@ -1,0 +1,165 @@
+from __future__ import annotations
+
+import base64
+import hashlib
+import mimetypes
+import os
+import tempfile
+from pathlib import Path
+
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+MAX_REFS = 5
+MAX_REF_BYTES = 15 * 1024 * 1024
+MAX_REFS_TOTAL_BYTES = 40 * 1024 * 1024
+
+class PolicyError(ValueError):
+    """Raised for local policy violations before network calls."""
+
+
+def resolve_path(path: Path) -> Path:
+    return path.expanduser().resolve(strict=False)
+
+
+def assert_inside(path: Path, root: Path, label: str, *, allow_outside: bool = False) -> Path:
+    resolved = resolve_path(path)
+    root = resolve_path(root)
+    if allow_outside:
+        return resolved
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise PolicyError(f"{label} must stay under {root}. Got: {resolved}. Use the explicit override flag only when intentional.") from exc
+    return resolved
+
+
+def default_root(root: Path | None = None) -> Path:
+    return resolve_path(root or Path.cwd())
+
+
+def resolve_output_path(out: Path | None, prompt_slug: str, *, root: Path, allow_outside: bool, overwrite: bool, create_parent: bool) -> Path:
+    from datetime import datetime
+    import re
+    import uuid
+    safe_root = default_root(root)
+    if out is None:
+        slug = re.sub(r"[^A-Za-z0-9._-]+", "-", prompt_slug.strip().lower()).strip("-._")[:42] or "gpt-image-2"
+        candidate = safe_root / "generated" / "gpt-image-2" / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{slug}-{uuid.uuid4().hex[:6]}.png"
+    else:
+        candidate = out.expanduser()
+    if candidate.suffix.lower() != ".png":
+        raise PolicyError(f"Output path must end with .png: {candidate}")
+    if candidate.is_symlink():
+        target = candidate.resolve(strict=False)
+        if target.suffix.lower() != ".png":
+            raise PolicyError(f"Resolved output target must end with .png: {target}")
+        assert_inside(target, safe_root, "Output file", allow_outside=allow_outside)
+        raise PolicyError(f"Output path is a symlink and is refused for safety: {candidate}")
+    if candidate.exists():
+        existing = candidate.resolve(strict=True)
+        assert_inside(existing, safe_root, "Output file", allow_outside=allow_outside)
+        if not overwrite:
+            raise PolicyError(f"Output already exists: {existing}. Use --overwrite to replace it.")
+        return existing
+    parent = assert_inside(candidate.parent, safe_root, "Output parent", allow_outside=allow_outside)
+    resolved = parent / candidate.name
+    if create_parent:
+        parent.mkdir(parents=True, exist_ok=True)
+    return resolved
+
+
+def resolve_prompt_file(path: Path, *, root: Path, allow_outside: bool) -> Path:
+    p = assert_inside(path, root, "Prompt file", allow_outside=allow_outside)
+    if not p.is_file():
+        raise PolicyError(f"Prompt file not found: {p}")
+    return p
+
+
+def read_prompt(prompt: str | None, prompt_file: Path | None, *, root: Path, allow_prompt_file_outside: bool) -> str:
+    if prompt and prompt_file:
+        raise PolicyError("Pass either positional prompt or --prompt-file, not both.")
+    if prompt_file:
+        text = resolve_prompt_file(prompt_file, root=root, allow_outside=allow_prompt_file_outside).read_text(encoding="utf-8")
+    elif prompt:
+        text = prompt
+    else:
+        raise PolicyError("Prompt is required. Pass a positional prompt or --prompt-file.")
+    text = text.strip()
+    if not text:
+        raise PolicyError("Prompt is empty after trimming whitespace.")
+    return text
+
+
+def validate_refs(refs: list[Path], *, root: Path, allow_outside: bool) -> list[Path]:
+    if len(refs) > MAX_REFS:
+        raise PolicyError(f"max {MAX_REFS} reference images, got {len(refs)}")
+    resolved: list[Path] = []
+    total = 0
+    for ref in refs:
+        path = assert_inside(ref, root, "Reference image", allow_outside=allow_outside)
+        if not path.is_file():
+            raise PolicyError(f"Reference image not found: {path}")
+        if path.suffix.lower() not in IMAGE_EXTS:
+            raise PolicyError(f"Unsupported reference image extension: {path}. Use png/jpg/webp.")
+        size = path.stat().st_size
+        if size > MAX_REF_BYTES:
+            raise PolicyError(f"Reference too large: {path} ({size} bytes > {MAX_REF_BYTES})")
+        total += size
+        resolved.append(path)
+    if total > MAX_REFS_TOTAL_BYTES:
+        raise PolicyError(f"reference images total too large: {total} bytes > {MAX_REFS_TOTAL_BYTES}")
+    return resolved
+
+
+def mime_for(path: Path) -> str:
+    mime, _ = mimetypes.guess_type(str(path))
+    if mime in {"image/png", "image/jpeg", "image/webp"}:
+        return mime
+    if path.suffix.lower() == ".png":
+        return "image/png"
+    if path.suffix.lower() in {".jpg", ".jpeg"}:
+        return "image/jpeg"
+    if path.suffix.lower() == ".webp":
+        return "image/webp"
+    raise PolicyError(f"Unsupported reference type: {path}. Use png/jpg/webp.")
+
+
+def ref_to_data_url(path: Path) -> str:
+    return f"data:{mime_for(path)};base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def atomic_write_png(path: Path, data: bytes, *, overwrite: bool) -> None:
+    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise PolicyError("Generated payload is not a PNG file.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_symlink():
+        raise PolicyError(f"Refusing to write through output symlink: {path}")
+    if path.exists() and not overwrite:
+        raise PolicyError(f"Output already exists: {path}. Use --overwrite to replace it.")
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        if path.is_symlink():
+            raise PolicyError(f"Refusing to replace output symlink: {path}")
+        os.replace(tmp, path)
+        try:
+            path.chmod(0o600)
+        except OSError:
+            pass
+    finally:
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
