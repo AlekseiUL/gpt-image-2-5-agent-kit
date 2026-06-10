@@ -1,5 +1,8 @@
 # GPT Image 2 Agent Kit
 
+
+![GPT Image 2 Agent Kit hero: artist sketching a GPT Image 2 agent workflow in a colorful studio](docs/assets/gpt-image-2-agent-kit-hero.jpg)
+
 A local-first toolkit for agents and operators who want a safer GPT Image 2 workflow: better prompts, optional reference images, dry-run planning, receipts, and strict file boundaries.
 
 It is built from the lessons of an internal designer-agent workflow, but this public repo is sanitized: no private paths, no private facepack, no tokens, no internal agent names.
