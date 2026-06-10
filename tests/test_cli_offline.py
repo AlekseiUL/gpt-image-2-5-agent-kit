@@ -238,3 +238,23 @@ def test_list_library(tmp_path):
     assert proc.returncode == 0
     payload = json.loads(proc.stdout)
     assert payload["library"]["identities"] == ["me"]
+
+
+
+def test_cli_combined_refs_global_cap(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    refs = [png(root / f"r{i}.png") for i in range(6)]
+    assert run_cli(["--root", str(root), "--add-identity", "me", "--ref", str(refs[0]), "--ref", str(refs[1]), "--ref", str(refs[2])], cwd=Path.cwd()).returncode == 0
+    proc = run_cli(["make image with me", "--root", str(root), "--identity", "me", "--ref", str(refs[3]), "--ref", str(refs[4]), "--ref", str(refs[5]), "--json"], cwd=Path.cwd())
+    assert proc.returncode == 2
+    assert "max" in json.loads(proc.stdout)["error"]
+
+
+def test_cli_edit_and_prompt_conflict_rejected(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    base = png(root / "base.png")
+    proc = run_cli(["normal prompt", "--root", str(root), "--edit-image", str(base), "--edit", "remove background", "--json"], cwd=Path.cwd())
+    assert proc.returncode == 2
+    assert "either --edit" in json.loads(proc.stdout)["error"]

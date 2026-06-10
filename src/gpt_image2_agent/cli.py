@@ -74,6 +74,8 @@ def main(argv: list[str] | None = None) -> int:
             emit({"success": True, "created": "style", "manifest": manifest}, as_json=args.json)
             return 0
 
+        if args.edit and (args.prompt or args.prompt_file):
+            raise PolicyError("Pass either --edit or a normal prompt/--prompt-file, not both.")
         prompt_source = args.edit or args.prompt
         raw_prompt = read_prompt(prompt_source, args.prompt_file, root=root, allow_prompt_file_outside=args.allow_prompt_file_outside_root)
         refs = validate_refs(args.ref, root=root, allow_outside=args.allow_ref_outside_root)
@@ -89,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
         edit_refs: list[Path] = []
         if args.edit_image:
             edit_refs = validate_refs([args.edit_image], root=root, allow_outside=args.allow_ref_outside_root)
-        all_refs = identity_refs + style_refs + edit_refs + refs
+        all_refs = validate_refs(identity_refs + style_refs + edit_refs + refs, root=root, allow_outside=args.allow_ref_outside_root)
         presets = list(dict.fromkeys([*args.preset, *style_presets]))
         final_prompt = build_prompt(
             raw_prompt,
