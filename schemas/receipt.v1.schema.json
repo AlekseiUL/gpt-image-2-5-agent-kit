@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlekseiUL/gpt-image-2-agent-kit/schemas/receipt.v1.schema.json",
+  "title": "GPT Image 2 Agent Kit receipt v1",
+  "type": "object",
+  "required": ["schema", "timestamp_utc", "status", "dry_run", "backend", "host_model", "image_model", "quality", "aspect", "size", "output_path", "prompt_sha256", "refs"],
+  "properties": {
+    "schema": {"const": "gpt-image2-agent.receipt.v1"},
+    "timestamp_utc": {"type": "string"},
+    "status": {"type": "string", "enum": ["planned", "pending", "success", "error"]},
+    "dry_run": {"type": "boolean"},
+    "backend": {"type": "string"},
+    "host_model": {"type": "string"},
+    "image_model": {"type": "string"},
+    "quality": {"type": "string", "enum": ["low", "medium", "high"]},
+    "aspect": {"type": "string", "enum": ["landscape", "square", "portrait"]},
+    "size": {"type": "string"},
+    "output_path": {"type": "string"},
+    "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "bytes", "suffix"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "bytes": {"type": "integer", "minimum": 0},
+          "suffix": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "prompt": {"type": "string"},
+    "identity": {"type": ["string", "null"]},
+    "style": {"type": ["string", "null"]},
+    "edit_image": {"type": ["string", "null"]},
+    "error_class": {"type": "string"}
+  },
+  "additionalProperties": true
+}

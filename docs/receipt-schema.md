@@ -1,5 +1,7 @@
 # Receipt schema
 
+Machine-readable schema: `schemas/receipt.v1.schema.json`. Identity/style schemas are listed in `docs/schemas.md`.
+
 Receipts are the audit trail for agent-generated images.
 
 A receipt is JSON with this schema name:

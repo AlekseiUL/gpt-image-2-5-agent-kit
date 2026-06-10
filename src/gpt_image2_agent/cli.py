@@ -11,6 +11,7 @@ from .library import list_library, load_identity_refs, load_style, save_identity
 from .prompts import available_presets, build_prompt
 from .receipts import build_receipt, write_receipt
 from .redaction import sanitize_error_text
+from .review import build_review_markdown
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -31,6 +32,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--host-model", default=DEFAULT_HOST_MODEL)
     parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--json", action="store_true", help="Print compact JSON result")
+    parser.add_argument("--review-markdown", action="store_true", help="Print a human-readable Markdown review plan instead of JSON/plain output")
     parser.add_argument("--dry-run", action="store_true", help="Validate and print plan without auth/network/output write. This is the default unless --live is passed. May write --receipt if requested.")
     parser.add_argument("--live", action="store_true", help="Actually call backend and write PNG")
     parser.add_argument("--overwrite", action="store_true", help="Allow replacing existing output")
@@ -62,6 +64,8 @@ def main(argv: list[str] | None = None) -> int:
     root = default_root(args.root)
     dry_run = args.dry_run or not args.live
     try:
+        if args.json and args.review_markdown:
+            raise PolicyError("Pass either --json or --review-markdown, not both.")
         if args.list_library:
             emit({"success": True, "library": list_library(root)}, as_json=args.json)
             return 0
@@ -112,7 +116,23 @@ def main(argv: list[str] | None = None) -> int:
             if args.receipt:
                 write_receipt(args.receipt, receipt, root=root, allow_outside=args.allow_receipt_outside_root)
                 result["receipt_path"] = str(args.receipt)
-            emit(result, as_json=args.json)
+            if args.review_markdown:
+                print(build_review_markdown(
+                    dry_run=True,
+                    backend=CODEX_BASE_URL,
+                    final_prompt=final_prompt,
+                    quality=args.quality,
+                    aspect=args.aspect,
+                    size=SIZES[args.aspect],
+                    out=out,
+                    refs=all_refs,
+                    identity=args.identity,
+                    style=args.style,
+                    edit_image=args.edit_image,
+                    receipt_path=args.receipt,
+                ), end="")
+            else:
+                emit(result, as_json=args.json)
             return 0
         token = read_token(provider=args.auth_provider, token_env=args.token_env, token_file=args.token_file, token_command=args.token_command)
         generated = generate_image(prompt=final_prompt, refs=all_refs, out=out, token=token, host_model=args.host_model, quality=args.quality, aspect=args.aspect, timeout=args.timeout, overwrite=args.overwrite)
@@ -121,7 +141,23 @@ def main(argv: list[str] | None = None) -> int:
         if args.receipt:
             write_receipt(args.receipt, receipt, root=root, allow_outside=args.allow_receipt_outside_root)
             result["receipt_path"] = str(args.receipt)
-        emit(result, as_json=args.json)
+        if args.review_markdown:
+            print(build_review_markdown(
+                dry_run=False,
+                backend=CODEX_BASE_URL,
+                final_prompt=final_prompt,
+                quality=args.quality,
+                aspect=args.aspect,
+                size=SIZES[args.aspect],
+                out=generated,
+                refs=all_refs,
+                identity=args.identity,
+                style=args.style,
+                edit_image=args.edit_image,
+                receipt_path=args.receipt,
+            ), end="")
+        else:
+            emit(result, as_json=args.json)
         return 0
     except (PolicyError, AuthError, ClientError, ValueError) as exc:
         err = sanitize_error_text(exc)

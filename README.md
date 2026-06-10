@@ -1,9 +1,17 @@
 # GPT Image 2 Agent Kit
 
+![CI](https://github.com/AlekseiUL/gpt-image-2-agent-kit/actions/workflows/repository-quality.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+![Status](https://img.shields.io/badge/status-public_preview-orange.svg)
 
 ![GPT Image 2 Agent Kit hero: artist sketching a GPT Image 2 agent workflow in a colorful studio](docs/assets/gpt-image-2-agent-kit-hero.jpg)
 
-A local-first toolkit for agents and operators who want a safer GPT Image 2 workflow: better prompts, optional reference images, dry-run planning, receipts, and strict file boundaries.
+A local-first toolkit for agents and operators who want a safer image-generation workflow with GPT Image 2-compatible backends: better prompts, optional reference images, dry-run planning, receipts, and strict file boundaries.
+
+**Unofficial community toolkit. Not affiliated with, endorsed by, or sponsored by OpenAI.**
+
+Live generation is experimental and best-effort. It depends on your own compatible ChatGPT/Codex access, current product availability, rate limits, regional/account policy, and terms. The stable core of this repo is the local planning workflow: dry-run, references, identity/style/edit organization, receipts and path safety.
 
 It is built from the lessons of an internal designer-agent workflow, but this public repo is sanitized: no private paths, no private facepack, no tokens, no internal agent names.
 
@@ -16,6 +24,16 @@ The flow is:
 ```text
 request -> prompt plan -> identity/style/edit references -> dry-run -> receipt -> optional live generation
 ```
+
+## Modes
+
+- **Default / dry-run**: no token, no network, no image output. Prints a plan for agent/operator review.
+- **Dry-run + receipt**: no token and no network; writes only the requested JSON receipt.
+- **Review Markdown**: `--review-markdown` prints a human-readable plan with prompt, refs, output path and risk notes.
+- **Live**: `--live` reads your configured token, sends the prompt and selected refs to the backend, and writes a PNG.
+- **Identity**: `--identity NAME` reuses a saved local person/character reference pack.
+- **Style**: `--style NAME` reuses a saved local brand/style/moodboard pack.
+- **Edit**: `--edit-image IMAGE --edit "..."` modifies an existing image while preserving requested parts.
 
 ## What it does
 
@@ -56,6 +74,17 @@ gpt-image2-agent "portrait of a calm technical operator" \
   --quality low \
   --dry-run \
   --json
+```
+
+Human-readable review plan:
+
+```bash
+gpt-image2-agent "portrait of a calm technical operator" \
+  --preset portrait \
+  --aspect square \
+  --quality low \
+  --dry-run \
+  --review-markdown
 ```
 
 Use a reference image in the plan. This repository intentionally does not include real face references; replace the path with your own local image:
@@ -151,6 +180,9 @@ More detail:
 - `docs/comparison.md`
 - `docs/security-model.md`
 - `docs/receipt-schema.md`
+- `docs/schemas.md`
+- `examples/prompts/` for copyable dry-run workflows
+- `schemas/` for machine-readable receipt/identity/style schemas
 
 ## Safety model
 
@@ -216,6 +248,7 @@ Where permitted by the applicable license, if you reuse, fork, modify, package, 
 - сохранять style packs: брендбук, визуальный стиль, moodboard, стиль автора;
 - работать в edit mode: взять исходную картинку и изменить только то, что попросили;
 - делать `dry-run` без токена, сети и записи результата;
+- выводить понятный Markdown-план через `--review-markdown`, чтобы агент или человек мог проверить запрос до live-вызова;
 - писать результат только в безопасную папку;
 - сохранять receipt без токенов и без сырых картинок;
 - запускать live-генерацию только когда вы сами передали доступ.

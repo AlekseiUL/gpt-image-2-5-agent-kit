@@ -1,0 +1,24 @@
+{
+  "success": true,
+  "dry_run": true,
+  "would_call": "https://chatgpt.com/backend-api/codex/responses",
+  "refs_count": 0,
+  "receipt": {
+    "schema": "gpt-image2-agent.receipt.v1",
+    "timestamp_utc": "2026-06-10T00:00:00+00:00",
+    "status": "planned",
+    "dry_run": true,
+    "backend": "https://chatgpt.com/backend-api/codex",
+    "host_model": "gpt-5.5",
+    "image_model": "gpt-image-2",
+    "quality": "low",
+    "aspect": "square",
+    "size": "1024x1024",
+    "output_path": "generated/gpt-image-2/example.png",
+    "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "refs": [],
+    "identity": null,
+    "style": null,
+    "edit_image": null
+  }
+}

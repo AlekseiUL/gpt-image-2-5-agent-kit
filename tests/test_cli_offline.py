@@ -258,3 +258,53 @@ def test_cli_edit_and_prompt_conflict_rejected(tmp_path):
     proc = run_cli(["normal prompt", "--root", str(root), "--edit-image", str(base), "--edit", "remove background", "--json"], cwd=Path.cwd())
     assert proc.returncode == 2
     assert "either --edit" in json.loads(proc.stdout)["error"]
+
+
+
+def test_cli_review_markdown_dry_run(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    proc = run_cli(["robot painter", "--root", str(root), "--preset", "no-text", "--dry-run", "--review-markdown"], cwd=Path.cwd())
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.stdout.startswith("# GPT Image 2 generation review")
+    assert "## Final prompt" in proc.stdout
+    assert "robot painter" in proc.stdout
+    assert "Network call:** no" in proc.stdout
+
+
+def test_cli_review_markdown_rejects_json_combo(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    proc = run_cli(["robot", "--root", str(root), "--json", "--review-markdown"], cwd=Path.cwd())
+    assert proc.returncode == 2
+    payload = json.loads(proc.stdout)
+    assert "either --json" in payload["error"]
+
+
+def test_schema_files_validate_generated_artifacts(tmp_path):
+    from jsonschema import validate
+    from gpt_image2_agent.receipts import build_receipt
+    from gpt_image2_agent.library import save_identity, save_style
+
+    root = tmp_path / "root"
+    root.mkdir()
+    ref = png(root / "ref.png")
+    receipt = build_receipt(
+        status="planned",
+        dry_run=True,
+        backend="https://example.test",
+        host_model="gpt-5.5",
+        image_model="gpt-image-2",
+        quality="low",
+        aspect="square",
+        size="1024x1024",
+        out=root / "out.png",
+        prompt="robot",
+        refs=[ref],
+    )
+    identity = save_identity(root, "me", [ref])
+    style = save_style(root, "brand", prompt="dark palette", presets=["brand-style"])
+    schema_root = Path("schemas")
+    validate(receipt, json.loads((schema_root / "receipt.v1.schema.json").read_text()))
+    validate(identity, json.loads((schema_root / "identity.v1.schema.json").read_text()))
+    validate(style, json.loads((schema_root / "style.v1.schema.json").read_text()))

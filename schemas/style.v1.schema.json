@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlekseiUL/gpt-image-2-agent-kit/schemas/style.v1.schema.json",
+  "title": "GPT Image 2 Agent Kit style manifest v1",
+  "type": "object",
+  "required": ["schema", "name", "prompt", "presets", "refs"],
+  "properties": {
+    "schema": {"const": "gpt-image2-agent.style.v1"},
+    "name": {"type": "string", "minLength": 1},
+    "prompt": {"type": "string"},
+    "presets": {"type": "array", "items": {"type": "string"}},
+    "refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "source_name", "bytes"],
+        "properties": {
+          "path": {"type": "string"},
+          "source_name": {"type": "string"},
+          "bytes": {"type": "integer", "minimum": 0}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
