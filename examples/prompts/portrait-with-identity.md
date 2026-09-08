@@ -3,7 +3,7 @@
 Create a local identity pack first:
 
 ```bash
-gpt-image2-agent --root . --add-identity me \
+gpt-image25-agent --root . --add-identity me \
   --ref refs/me-front.png \
   --ref refs/me-side.png
 ```
@@ -11,7 +11,7 @@ gpt-image2-agent --root . --add-identity me \
 Plan an image with that identity:
 
 ```bash
-gpt-image2-agent "cinematic portrait of me as a calm technical operator in a dark studio" \
+gpt-image25-agent "cinematic portrait of me as a calm technical operator in a dark studio" \
   --identity me \
   --preset portrait \
   --preset likeness \

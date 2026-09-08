@@ -5,20 +5,25 @@
   "refs_count": 0,
   "receipt": {
     "schema": "gpt-image2-agent.receipt.v1",
-    "timestamp_utc": "2026-06-10T00:00:00+00:00",
+    "timestamp_utc": "2026-09-08T00:00:00+00:00",
     "status": "planned",
     "dry_run": true,
     "backend": "https://chatgpt.com/backend-api/codex",
     "host_model": "gpt-5.5",
-    "image_model": "gpt-image-2",
+    "image_model": "gpt-image-2.5-sunburst",
     "quality": "low",
     "aspect": "square",
     "size": "1024x1024",
-    "output_path": "generated/gpt-image-2/example.png",
+    "output_path": "generated/gpt-image-2.5/example.png",
     "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
     "refs": [],
     "identity": null,
     "style": null,
-    "edit_image": null
+    "edit_image": null,
+    "background": "opaque",
+    "output_format": "png",
+    "action": "auto",
+    "reference_roles": [],
+    "output_compression": null
   }
 }

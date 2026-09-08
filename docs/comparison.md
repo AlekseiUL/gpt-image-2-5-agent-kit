@@ -1,6 +1,6 @@
 # Comparison and positioning
 
-GPT Image 2 tools usually fall into a few groups:
+GPT Image tools usually fall into a few groups:
 
 - simple prompt-to-image CLIs;
 - web or desktop UIs with drag-and-drop references;
@@ -8,7 +8,7 @@ GPT Image 2 tools usually fall into a few groups:
 - browser automation wrappers;
 - direct API wrappers.
 
-GPT Image 2 Agent Kit is intentionally different.
+GPT Image 2.5 Agent Kit is intentionally different.
 
 ## Main differentiator
 
@@ -36,8 +36,10 @@ That matters when an AI agent is doing the work, because the risky parts are not
 - JSON receipts store hashes and metadata, not raw tokens or image bytes.
 - Output/reference/prompt/receipt paths are root-bounded by default.
 - Symlink escapes are tested.
-- Reference images are checked by extension and magic bytes.
-- Offline tests and a repository quality scanner run in CI.
+- Explicit reference roles, preservation instructions and masks make edit intent inspectable.
+- Completed responses and full image decoding are required before an atomic output write.
+- Offline validation and a repository quality scanner can run without live credentials.
+- PNG/JPEG/WebP output settings are recorded separately from actual decoded output metadata.
 
 ## What this kit does not compete on
 
@@ -54,3 +56,5 @@ That matters when an AI agent is doing the work, because the risky parts are not
 - Brand-consistent visual generation from saved style packs.
 - Safe image-edit planning before live calls.
 - Local-first automation where receipts and boundaries matter.
+
+Live execution uses an experimental ChatGPT/Codex backend, not an implemented official API integration. See [capabilities](capabilities.md) and [verification status](../README.md#verification-status) for the distinction between local controls and tested backend behavior.

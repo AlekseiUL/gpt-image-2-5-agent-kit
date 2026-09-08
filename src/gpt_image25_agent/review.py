@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .models import DEFAULT_IMAGE_MODEL
+
 
 def _line(label: str, value: Any) -> str:
     return f"- **{label}:** {value if value not in (None, '') else 'not set'}"
@@ -22,6 +24,14 @@ def build_review_markdown(
     style: str | None,
     edit_image: Path | None,
     receipt_path: Path | None = None,
+    image_model: str = DEFAULT_IMAGE_MODEL,
+    host_model: str | None = None,
+    background: str = "opaque",
+    action: str = "auto",
+    output_format: str = "png",
+    output_compression: int | None = None,
+    mask: Path | None = None,
+    reference_roles: list[str] | None = None,
 ) -> str:
     """Build a human-readable review plan for an agent/operator.
 
@@ -30,7 +40,7 @@ def build_review_markdown(
     prompt unless explicitly requested.
     """
     lines = [
-        "# GPT Image 2 generation review",
+        "# GPT Image 2.5 generation review",
         "",
         "## Mode",
         _line("Dry run", str(dry_run).lower()),
@@ -39,9 +49,17 @@ def build_review_markdown(
         _line("Live generation executed", "no" if dry_run else "yes"),
         "",
         "## Settings",
+        _line("Image model", image_model),
+        _line("Host model", host_model),
         _line("Quality", quality),
         _line("Aspect", aspect),
         _line("Size", size),
+        _line("Background", background),
+        _line("Output format", output_format),
+        _line("Output compression", output_compression),
+        _line("Mask", mask),
+        _line("Reference roles", ", ".join(reference_roles or [])),
+        _line("Action", action),
         _line("Output path", out),
         _line("Receipt path", receipt_path),
         "",

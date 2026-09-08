@@ -1,8 +1,8 @@
 # NOTICE
 
-GPT Image 2 Agent Kit is maintained by Aleksei Ulianov / Sprut_AI.
+GPT Image 2.5 Agent Kit is maintained by Aleksei Ulianov / Sprut_AI.
 
-Canonical source: https://github.com/AlekseiUL/gpt-image-2-agent-kit
+Canonical source: https://github.com/AlekseiUL/gpt-image-2-5-agent-kit
 
 This repository is a sanitized public toolkit inspired by an internal agent workflow. It does not include private prompts, private reference images, credentials, internal runtime paths, or generated user media.
 
