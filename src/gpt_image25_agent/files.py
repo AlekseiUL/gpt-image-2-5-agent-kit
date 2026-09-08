@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import mimetypes
+import io
 import os
 import tempfile
+import warnings
 from pathlib import Path
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
+OUTPUT_EXTENSIONS = {"png": {".png"}, "jpeg": {".jpg", ".jpeg"}, "webp": {".webp"}}
 MAX_REFS = 5
 MAX_REF_BYTES = 15 * 1024 * 1024
 MAX_REFS_TOTAL_BYTES = 40 * 1024 * 1024
@@ -36,31 +38,40 @@ def default_root(root: Path | None = None) -> Path:
     return resolve_path(root or Path.cwd())
 
 
-def resolve_output_path(out: Path | None, prompt_slug: str, *, root: Path, allow_outside: bool, overwrite: bool, create_parent: bool) -> Path:
+def resolve_output_path(out: Path | None, prompt_slug: str, *, root: Path, allow_outside: bool, overwrite: bool, create_parent: bool, output_format: str = "png") -> Path:
     from datetime import datetime
     import re
     import uuid
+    extensions = _output_extensions(output_format)
     safe_root = default_root(root)
     if out is None:
-        slug = re.sub(r"[^A-Za-z0-9._-]+", "-", prompt_slug.strip().lower()).strip("-._")[:42] or "gpt-image-2"
-        candidate = safe_root / "generated" / "gpt-image-2" / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{slug}-{uuid.uuid4().hex[:6]}.png"
+        slug = re.sub(r"[^A-Za-z0-9._-]+", "-", prompt_slug.strip().lower()).strip("-._")[:42] or "gpt-image-2.5"
+        suffix = ".jpg" if output_format == "jpeg" else f".{output_format}"
+        candidate = safe_root / "generated" / "gpt-image-2.5" / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{slug}-{uuid.uuid4().hex[:6]}{suffix}"
     else:
         candidate = out.expanduser()
-    if candidate.suffix.lower() != ".png":
-        raise PolicyError(f"Output path must end with .png: {candidate}")
+    if candidate.suffix.lower() not in extensions:
+        raise PolicyError(f"Output path must end with {' or '.join(sorted(extensions))} for {output_format}: {candidate}")
     if candidate.is_symlink():
         target = candidate.resolve(strict=False)
-        if target.suffix.lower() != ".png":
-            raise PolicyError(f"Resolved output target must end with .png: {target}")
+        if target.suffix.lower() not in extensions:
+            raise PolicyError(f"Resolved output target must end with {' or '.join(sorted(extensions))}: {target}")
         assert_inside(target, safe_root, "Output file", allow_outside=allow_outside)
         raise PolicyError(f"Output path is a symlink and is refused for safety: {candidate}")
     if candidate.exists():
         existing = candidate.resolve(strict=True)
         assert_inside(existing, safe_root, "Output file", allow_outside=allow_outside)
+        if not existing.is_file():
+            raise PolicyError(f"Output must be a regular file, not a directory or special file: {existing}")
         if not overwrite:
             raise PolicyError(f"Output already exists: {existing}. Use --overwrite to replace it.")
         return existing
     parent = assert_inside(candidate.parent, safe_root, "Output parent", allow_outside=allow_outside)
+    ancestor = parent
+    while not ancestor.exists() and ancestor != ancestor.parent:
+        ancestor = ancestor.parent
+    if not ancestor.is_dir():
+        raise PolicyError(f"Output parent ancestor must be a directory: {ancestor}")
     resolved = parent / candidate.name
     if create_parent:
         parent.mkdir(parents=True, exist_ok=True)
@@ -123,17 +134,7 @@ def image_kind_from_bytes(path: Path) -> str:
 
 
 def mime_for(path: Path) -> str:
-    image_kind_from_bytes(path)
-    mime, _ = mimetypes.guess_type(str(path))
-    if mime in {"image/png", "image/jpeg", "image/webp"}:
-        return mime
-    if path.suffix.lower() == ".png":
-        return "image/png"
-    if path.suffix.lower() in {".jpg", ".jpeg"}:
-        return "image/jpeg"
-    if path.suffix.lower() == ".webp":
-        return "image/webp"
-    raise PolicyError(f"Unsupported reference type: {path}. Use png/jpg/webp.")
+    return f"image/{image_kind_from_bytes(path)}"
 
 
 def ref_to_data_url(path: Path) -> str:
@@ -148,9 +149,65 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def atomic_write_png(path: Path, data: bytes, *, overwrite: bool) -> None:
-    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
-        raise PolicyError("Generated payload is not a PNG file.")
+def _output_extensions(output_format: str) -> set[str]:
+    if output_format not in OUTPUT_EXTENSIONS:
+        raise PolicyError("Output format must be png, jpeg, or webp.")
+    return OUTPUT_EXTENSIONS[output_format]
+
+
+def _decode_image(data: bytes, *, expected_format: str, label: str):
+    """Verify the container and fully decode its pixels before accepting bytes."""
+    from PIL import Image
+
+    _output_extensions(expected_format)
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(data)) as probe:
+                if probe.format != expected_format.upper():
+                    raise PolicyError(f"{label} is not a {expected_format.upper()} file.")
+                probe.verify()
+            with Image.open(io.BytesIO(data)) as decoded:
+                decoded.load()
+                return decoded.copy()
+    except PolicyError:
+        raise
+    except Exception as exc:
+        raise PolicyError(f"{label} is not a valid, fully decodable {expected_format.upper()} image.") from exc
+
+
+def validate_mask(mask: Path, edit_base: Path, *, root: Path | None = None, allow_outside: bool = False) -> Path:
+    """Validate a PNG mask independently of the reference-image count budget."""
+    path = assert_inside(mask, root, "Mask image", allow_outside=allow_outside) if root is not None else resolve_path(mask)
+    base = assert_inside(edit_base, root, "Edit base image", allow_outside=allow_outside) if root is not None else resolve_path(edit_base)
+    decoded = []
+    try:
+        for source, label in ((path, "Mask image"), (base, "Edit base image")):
+            if not source.is_file():
+                raise PolicyError(f"{label} not found: {source}")
+            if source.suffix.lower() != ".png":
+                raise PolicyError(f"{label} must be PNG for masked edits: {source}")
+            if source.stat().st_size > MAX_REF_BYTES:
+                raise PolicyError(f"{label} too large: {source} (limit {MAX_REF_BYTES} bytes)")
+            decoded.append(_decode_image(source.read_bytes(), expected_format="png", label=label))
+        mask_image, base_image = decoded
+        if mask_image.size != base_image.size:
+            raise PolicyError("Mask image and edit base image must have the same dimensions.")
+        if "A" not in mask_image.getbands() and "transparency" not in mask_image.info:
+            raise PolicyError("Mask PNG must contain an alpha channel.")
+        if mask_image.convert("RGBA").getchannel("A").getextrema()[0] == 255:
+            raise PolicyError("Mask PNG is fully opaque; include transparent pixels for the area to edit.")
+    finally:
+        for image in decoded:
+            image.close()
+    return path
+
+
+def atomic_write_image(path: Path, data: bytes, *, output_format: str = "png", overwrite: bool) -> None:
+    decoded = _decode_image(data, expected_format=output_format, label="Generated payload")
+    decoded.close()
+    if path.suffix.lower() not in _output_extensions(output_format):
+        raise PolicyError(f"Output extension does not match {output_format}: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.is_symlink():
         raise PolicyError(f"Refusing to write through output symlink: {path}")
@@ -165,14 +222,23 @@ def atomic_write_png(path: Path, data: bytes, *, overwrite: bool) -> None:
             os.fsync(fh.fileno())
         if path.is_symlink():
             raise PolicyError(f"Refusing to replace output symlink: {path}")
-        os.replace(tmp, path)
-        try:
-            path.chmod(0o600)
-        except OSError:
-            pass
+        if overwrite:
+            os.replace(tmp, path)
+        else:
+            try:
+                # Hard-link publication is atomic and refuses a competing output.
+                # An existence check followed by replace would clobber that file.
+                os.link(tmp, path)
+            except FileExistsError as exc:
+                raise PolicyError(f"Output already exists: {path}. Use --overwrite to replace it.") from exc
     finally:
         if tmp.exists():
             try:
                 tmp.unlink()
             except OSError:
                 pass
+
+
+def atomic_write_png(path: Path, data: bytes, *, overwrite: bool) -> None:
+    """Compatibility wrapper for callers explicitly requesting PNG output."""
+    atomic_write_image(path, data, output_format="png", overwrite=overwrite)

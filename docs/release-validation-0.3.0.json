@@ -1,0 +1,39 @@
+{
+  "version": "0.3.0",
+  "verification_date": "2026-09-09",
+  "offline_tests": 269,
+  "lint": "PASS",
+  "privacy_scan": "PASS",
+  "live_checks": [
+    {
+      "model": "gpt-image-2.5-sunburst",
+      "attempts": 1,
+      "elapsed_seconds": 43.1,
+      "actual_output": {
+        "width": 1672,
+        "height": 941,
+        "format": "png",
+        "mode": "RGB",
+        "bytes": 1791363,
+        "sha256": "850c00bb2fae424aafcda428018e6c9dbf786bbd7a3c5a08f440690b2d0ec941"
+      }
+    },
+    {
+      "model": "gpt-image-2.5-flare",
+      "attempts": 1,
+      "elapsed_seconds": 40.35,
+      "actual_output": {
+        "width": 1672,
+        "height": 941,
+        "format": "png",
+        "mode": "RGB",
+        "bytes": 1666107,
+        "sha256": "9977a7caa48a003e0d546b4ebff71bd1603381e0e24d99b3235d35f36a0d6adb"
+      }
+    }
+  ],
+  "requested_canvas": "1536x864",
+  "live_output_format": "png",
+  "live_background": "opaque",
+  "models_are_requested_configuration_not_backend_attestation": true
+}

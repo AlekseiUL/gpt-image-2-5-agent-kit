@@ -14,7 +14,7 @@
     "quality": "low",
     "aspect": "square",
     "size": "1024x1024",
-    "output_path": "generated/gpt-image-2/example.png",
+    "output_path": "generated/gpt-image-2.5/example.png",
     "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
     "refs": [],
     "identity": null,
@@ -22,6 +22,8 @@
     "edit_image": null,
     "background": "opaque",
     "output_format": "png",
-    "action": "auto"
+    "action": "auto",
+    "reference_roles": [],
+    "output_compression": null
   }
 }

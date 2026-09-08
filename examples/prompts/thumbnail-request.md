@@ -3,7 +3,7 @@
 Goal: plan a YouTube/Telegram thumbnail before spending live generation quota.
 
 ```bash
-gpt-image2-agent "YouTube thumbnail: AI agent designer preparing a bold visual plan, no text" \
+gpt-image25-agent "YouTube thumbnail: AI agent designer preparing a bold visual plan, no text" \
   --image-model gpt-image-2.5-flare \
   --preset thumbnail \
   --preset no-text \

@@ -3,15 +3,15 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gpt-image-2-agent-kit"
-version = "0.2.0"
+name = "gpt-image-2-5-agent-kit"
+version = "0.3.0"
 description = "Local-first GPT Image 2.5 prompt/reference-image toolkit for agents."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [{name = "Aleksei Ulianov / Sprut_AI"}]
-dependencies = ["httpx>=0.25"]
-keywords = ["gpt-image-2.5", "gpt-image-2", "ai-agents", "image-generation", "prompting", "reference-images"]
+dependencies = ["httpx>=0.25", "Pillow>=11.0"]
+keywords = ["gpt-image-2.5", "ai-agents", "image-generation", "prompting", "reference-images"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
@@ -19,14 +19,14 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/AlekseiUL/gpt-image-2-agent-kit"
-Issues = "https://github.com/AlekseiUL/gpt-image-2-agent-kit/issues"
+Homepage = "https://github.com/AlekseiUL/gpt-image-2-5-agent-kit"
+Issues = "https://github.com/AlekseiUL/gpt-image-2-5-agent-kit/issues"
 
 [project.optional-dependencies]
-test = ["pytest>=8", "jsonschema>=4"]
+test = ["pytest>=8", "jsonschema>=4", "ruff>=0.15", "build>=1.2"]
 
 [project.scripts]
-gpt-image2-agent = "gpt_image2_agent.cli:main"
+gpt-image25-agent = "gpt_image25_agent.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,63 +1,61 @@
-# Migration to GPT Image 2.5
+# Migration to GPT Image 2.5 Agent Kit 0.3.0
 
-Version **0.2.0** changes the default image model to `gpt-image-2.5-sunburst` and adds a model selector. Existing scripts still use `gpt-image2-agent` and the `gpt_image2_agent` Python package. The repository/package name remains `gpt-image-2-agent-kit`, and the default output directory remains `generated/gpt-image-2/`.
+Version **0.3.0** makes this a GPT Image 2.5-only toolkit and renames the public package and command. Sunburst remains the default image model; Flare is the other supported choice. Earlier model IDs are rejected without a fallback call.
 
-## Choose a model explicitly
+## Breaking name changes
 
-| Image model | Toolkit use |
+| Before 0.3.0 | From 0.3.0 |
 | --- | --- |
-| `gpt-image-2.5-sunburst` | Default for this reference/edit toolkit |
-| `gpt-image-2.5-flare` | Alternative for everyday generation |
-| `gpt-image-2` | Explicit legacy selection for existing workflows |
+| Repository / distribution `gpt-image-2-agent-kit` | `gpt-image-2-5-agent-kit` |
+| CLI `gpt-image2-agent` | `gpt-image25-agent` |
+| Python import `gpt_image2_agent` | `gpt_image25_agent` |
+| Default output `generated/gpt-image-2/` | `generated/gpt-image-2.5/` |
 
-The choice of Sunburst as the toolkit default follows OpenAI's emphasis on editing precision in the [Sunburst model page](https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst). The [Flare model page](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare) describes its speed focus. This is the rationale for the default, not a benchmark performed by this repository.
+Canonical repository: [gpt-image-2-5-agent-kit](https://github.com/AlekseiUL/gpt-image-2-5-agent-kit). Update scripts, install instructions, import statements and any automation that relies on the default output directory. Use `--out` for a fixed path.
 
-```bash
-# New default, with no network or token access
-gpt-image2-agent "cinematic product hero" --dry-run --review-markdown
+The `.gpt-image2-agent` library directory and `gpt-image2-agent.*.v1` schema IDs remain for saved-data compatibility. Existing packs and historical receipts do not need renaming, and their old-looking identifiers do not select an old model. Git history retains earlier versions as history, not as an active fallback procedure.
 
-# Select Flare
-gpt-image2-agent "cinematic product hero" \
-  --image-model gpt-image-2.5-flare --dry-run --json
-
-# Keep the previous model selection
-gpt-image2-agent "cinematic product hero" \
-  --image-model gpt-image-2 --quality high --dry-run --json
-```
-
-The image model is a separate field from the host model. `--host-model` remains configurable and defaults to `gpt-5.5`; selecting an image model does not change the host model.
-
-## Image settings
-
-The CLI keeps `--quality medium` as its default. Both 2.5 models accept `low`, `medium`, `high`, `xhigh`, `max`, and `auto`; the CLI rejects `xhigh` and `max` when `gpt-image-2` is selected. These 2.5 quality options are listed on the [Sunburst](https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst) and [Flare](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare) model pages.
-
-`--size auto` delegates size selection to the backend. `--size WIDTHxHEIGHT` selects an explicit canvas and takes precedence over `--aspect`, including when an aspect flag is also supplied. Without `--size`, the existing square/portrait/landscape presets remain available. The receipt records `aspect: "custom"` for explicit dimensions and `aspect: "auto"` for automatic size.
-
-The size validator follows the [official image-generation guide](https://developers.openai.com/api/docs/guides/image-generation): dimensions are multiples of 16, the longer edge is no more than three times the shorter edge, neither edge exceeds 3840, and the total is 655,360–8,294,400 pixels. The guide marks resolutions above `2560x1440` experimental.
-
-`--background` accepts `opaque` (the toolkit default), `transparent`, or `auto`. Output remains PNG-only; the toolkit requests `output_format: "png"` and checks returned bytes before writing. For example:
+## Select a 2.5 model
 
 ```bash
-gpt-image2-agent "isolated ceramic robot mascot" \
-  --image-model gpt-image-2.5-sunburst \
-  --size 1024x1024 --quality xhigh --background transparent \
+gpt-image25-agent "cinematic product hero" \
+  --image-model gpt-image-2.5-sunburst --quality high \
   --dry-run --review-markdown
+
+gpt-image25-agent "minimal coastal illustration" \
+  --image-model gpt-image-2.5-flare --quality low \
+  --dry-run --json
 ```
 
-## References, edits and receipts
+Replace an explicit earlier model ID with one of these two choices. The image-model setting is separate from `--host-model`, which remains configurable and defaults to `gpt-5.5`. The quality default remains `medium`.
 
-Existing identity and style packs can be reused. `--edit-image` places the base image first among the input images and sends `action: "edit"`. Other requests send `action: "auto"`. `--edit` without `--edit-image` is now rejected because edit instructions need a base image.
+## New image controls
 
-The backend payload omits `input_fidelity`. This migration does not infer support for that parameter on 2.5 models or promise exact preservation of identity, composition, or pixels. Describe the intended preservation in the prompt and inspect the result.
+- Output can be `png`, `jpeg` or `webp` through `--output-format`; the default remains PNG. Choose a matching `--out` extension.
+- `--output-compression` accepts an integer from 0 to 100 for JPEG/WebP; it is invalid for PNG.
+- `--background transparent` requires PNG or WebP. Opaque remains the default.
+- `--mask` requires a decoded alpha PNG matching the edit base dimensions, with a transparent edit region. Use a PNG base; the edit base is placed first.
+- `--ref-role` labels explicit references; `--preserve` describes edit invariants. Both are visible in the planned prompt/metadata.
+- `--action auto|generate|edit` makes the requested action explicit. An edit requires a base; generation cannot be combined with an edit base.
 
-Receipts keep the `gpt-image2-agent.receipt.v1` schema name and add `background`, `output_format`, and `action` metadata. Older v1 receipts remain valid. Consumers should accept the new model IDs, quality values and `custom`/`auto` aspects. Markdown review shows the chosen image model and host model. See the [receipt documentation](receipt-schema.md).
+The 2.5 quality options `low`, `medium`, `high`, `xhigh`, `max`, `auto`, and `--size auto|WIDTHxHEIGHT` remain available. Explicit size overrides `--aspect`. Size validation follows the [official image-generation guide](https://developers.openai.com/api/docs/guides/image-generation); see [capabilities](capabilities.md) for limits and backend qualifications.
 
-## Live backend status
+## Prompts and references
 
-**No real live generation was performed to validate this migration.** Local planning and payload compatibility are distinct from account/backend availability.
+The prompt builder honors requested art medium, cropping, logos and text. It preserves literal Cyrillic without automatic shortening or translation. `no-text` and `russian-text` are mutually exclusive, including presets inherited from saved styles.
 
-The [official guide](https://developers.openai.com/api/docs/guides/image-generation) demonstrates the 2.5 models in the Image API and Responses API. This repository still uses its existing experimental ChatGPT/Codex backend, and this release does not implement either official API backend. The documentation does not establish that a subscription token can access these models through that route, or that a particular host model is enabled for an account.
+Reference order is edit base, saved identity references, saved style references, then explicit references. Index/role annotations follow that order. `--ref-role` applies only to explicit refs; saved packs receive automatic roles. `--edit`, `--preserve` and `--mask` require an edit base. Masks and preserve statements guide the model; they do not promise pixel-exact preservation. [Workflow examples](identity-style-edit-workflows.md).
 
-A dry-run does not probe model access. Live use remains subject to compatible access, backend behavior, availability, rate limits and terms. There is no free or unlimited access claim. If a backend rejects a selected model or option, inspect the error and choose a supported configuration explicitly; the toolkit does not silently switch models.
+## Completion and receipts
 
-Official sources above were checked on **2026-09-08**. Model availability and documentation can change.
+A live success now requires a successful completed response and a fully decodable image in the requested format. Interrupted streams, partial images, invalid image data and failed terminal responses are not accepted as successful output. Validated files are committed atomically, with protection against overwriting an existing or newly appeared file unless `--overwrite` is explicit. The CLI does not automatically retry or switch models.
+
+Receipts retain schema v1. They distinguish **requested configuration** from **actual output** metadata such as dimensions, decoded format, byte count and SHA-256. The requested model comes from the submitted payload and is not independent backend model attestation. Older receipts remain historical records; consumers should handle newer optional fields. [Receipt fields](receipt-schema.md).
+
+## Verification and backend status
+
+The post-change verification record for 0.3.0 is [maintained in the README](../README.md#verification-status). Do not treat a dry-run, test fixture or one successful live option combination as proof that every optional parameter is available on every account.
+
+This release continues to use the experimental ChatGPT/Codex backend. It does not implement the official Images API or Responses API backend. Official documentation describes those APIs; it does not establish equivalent support through this subscription route.
+
+Official sources: [Sunburst](https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst), [Flare](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare), [image-generation guide](https://developers.openai.com/api/docs/guides/image-generation). Consulted for the September 2026 migration; current availability may change.

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/AlekseiUL/gpt-image-2-agent-kit/schemas/style.v1.schema.json",
-  "title": "GPT Image 2 Agent Kit style manifest v1",
+  "$id": "https://github.com/AlekseiUL/gpt-image-2-5-agent-kit/schemas/style.v1.schema.json",
+  "title": "GPT Image 2.5 Agent Kit style manifest v1",
   "type": "object",
   "required": ["schema", "name", "prompt", "presets", "refs"],
   "properties": {

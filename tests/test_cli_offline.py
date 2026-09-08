@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from gpt_image2_agent import files as f
-from gpt_image2_agent import prompts
-from gpt_image2_agent.redaction import sanitize_error_text
+from gpt_image25_agent import files as f
+from gpt_image25_agent import prompts
+from gpt_image25_agent.redaction import sanitize_error_text
 
 
 def png(path: Path, size: int = 16) -> Path:
@@ -23,14 +23,14 @@ def run_cli(args, cwd: Path, env=None):
     e = os.environ.copy()
     if env:
         e.update(env)
-    return subprocess.run([sys.executable, "-m", "gpt_image2_agent", *args], cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=e)
+    return subprocess.run([sys.executable, "-m", "gpt_image25_agent", *args], cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=e)
 
 
 def test_build_prompt_presets_and_refs():
     out = prompts.build_prompt("make avatar", ["portrait", "likeness"], refs_count=1)
     assert "make avatar" in out
-    assert "Reference images supplied: 1" in out
-    assert "watermarks" in out
+    assert "Image 1 [general]" in out
+    assert "only for its assigned role" in out
 
 
 def test_unknown_preset_rejected():
@@ -108,7 +108,11 @@ def test_atomic_write_png_validates_png_and_no_partial(tmp_path):
     with pytest.raises(f.PolicyError):
         f.atomic_write_png(out, b"not png", overwrite=False)
     assert not out.exists()
-    f.atomic_write_png(out, b"\x89PNG\r\n\x1a\nabc", overwrite=False)
+    from io import BytesIO
+    from PIL import Image
+    buffer = BytesIO()
+    Image.new("RGB", (3, 2), "blue").save(buffer, format="PNG")
+    f.atomic_write_png(out, buffer.getvalue(), overwrite=False)
     assert out.read_bytes().startswith(b"\x89PNG")
 
 
@@ -200,7 +204,7 @@ def test_cli_add_identity_then_use_it_in_dry_run(tmp_path):
     assert proc.returncode == 0, proc.stdout + proc.stderr
     payload = json.loads(proc.stdout)
     assert payload["refs_count"] == 1
-    assert "Saved identity pack selected: me" in payload["final_prompt"]
+    assert "Saved identity pack: me" in payload["final_prompt"]
 
 
 def test_cli_add_style_then_use_it_with_refs(tmp_path):
@@ -214,7 +218,7 @@ def test_cli_add_style_then_use_it_with_refs(tmp_path):
     payload = json.loads(proc.stdout)
     assert payload["refs_count"] == 1
     assert "dark graphite palette" in payload["final_prompt"]
-    assert "Saved style pack selected: dark-brand" in payload["final_prompt"]
+    assert "Saved style pack: dark-brand" in payload["final_prompt"]
 
 
 def test_cli_edit_image_adds_edit_guidance_and_ref(tmp_path):
@@ -225,7 +229,7 @@ def test_cli_edit_image_adds_edit_guidance_and_ref(tmp_path):
     assert proc.returncode == 0, proc.stdout + proc.stderr
     payload = json.loads(proc.stdout)
     assert payload["refs_count"] == 1
-    assert "Treat the supplied edit/base image" in payload["final_prompt"]
+    assert "Edit the first supplied image" in payload["final_prompt"]
     assert payload["receipt"]["edit_image"] == str(base)
 
 
@@ -283,8 +287,8 @@ def test_cli_review_markdown_rejects_json_combo(tmp_path):
 
 def test_schema_files_validate_generated_artifacts(tmp_path):
     from jsonschema import validate
-    from gpt_image2_agent.receipts import build_receipt
-    from gpt_image2_agent.library import save_identity, save_style
+    from gpt_image25_agent.receipts import build_receipt
+    from gpt_image25_agent.library import save_identity, save_style
 
     root = tmp_path / "root"
     root.mkdir()

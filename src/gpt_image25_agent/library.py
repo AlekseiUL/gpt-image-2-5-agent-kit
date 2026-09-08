@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .files import PolicyError, assert_inside, default_root, validate_refs
-from .prompts import available_presets
+from .prompts import validate_presets
 
 LIBRARY_DIR = ".gpt-image2-agent"
 
@@ -69,10 +69,7 @@ def load_identity_refs(root: Path, name: str) -> list[Path]:
 
 def save_style(root: Path, name: str, *, prompt: str = "", presets: list[str] | None = None, refs: list[Path] | None = None, allow_ref_outside: bool = False) -> dict[str, Any]:
     root = default_root(root)
-    presets = presets or []
-    for preset in presets:
-        if preset not in available_presets():
-            raise PolicyError(f"unknown preset for style: {preset}")
+    presets = validate_presets(presets or [])
     if not prompt.strip() and not presets and not refs:
         raise PolicyError("--add-style requires --style-prompt, --style-preset, or --ref")
     dest = style_dir(root, name)

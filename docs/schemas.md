@@ -1,41 +1,27 @@
 # Schemas
 
-Machine-readable JSON Schemas live in `schemas/`:
+The toolkit uses these JSON Schemas for local saved artifacts:
 
-- `schemas/receipt.v1.schema.json`
-- `schemas/identity.v1.schema.json`
-- `schemas/style.v1.schema.json`
+- [`receipt.v1.schema.json`](../schemas/receipt.v1.schema.json)
+- [`identity.v1.schema.json`](../schemas/identity.v1.schema.json)
+- [`style.v1.schema.json`](../schemas/style.v1.schema.json)
 
-They document the stable local artifacts used by the toolkit.
+Version 0.3.0 retains the `gpt-image2-agent.*.v1` IDs and `.gpt-image2-agent` storage directory for saved-data compatibility. Those names do not enable an earlier model. Historical receipt values describe past requests; the current CLI's model allowlist controls new execution.
 
-## Receipt
+## Receipts
 
-Schema value:
+Schema ID: `gpt-image2-agent.receipt.v1`.
 
-```json
-"gpt-image2-agent.receipt.v1"
-```
+Receipts describe dry-run/live requests, normally using a hash of the final prompt. New optional metadata covers output settings, reference roles, masks and decoded output details while retaining historical receipt compatibility. Requested configuration and actual output are separate. See [receipt fields](receipt-schema.md).
 
-Receipts are audit records for dry-run/live planning and generation. By default they store a prompt hash, not the raw prompt.
+## Identity manifests
 
-The 0.2.0 migration retains receipt v1 and expands image-model/quality/size metadata. New receipts include `background`, `output_format` and `action`; these fields remain optional for older receipts. See [receipt fields](receipt-schema.md) and the [migration notes](migration-gpt-image-2.5.md).
+Schema ID: `gpt-image2-agent.identity.v1`.
 
-## Identity manifest
+Manifests live under `.gpt-image2-agent/identities/<name>/identity.json` and point to copied local references. They may contain sensitive identity data; a saved pack is not permission for unrelated use.
 
-Schema value:
+## Style manifests
 
-```json
-"gpt-image2-agent.identity.v1"
-```
+Schema ID: `gpt-image2-agent.style.v1`.
 
-Identity manifests live under `.gpt-image2-agent/identities/<name>/identity.json` and point to copied local reference images.
-
-## Style manifest
-
-Schema value:
-
-```json
-"gpt-image2-agent.style.v1"
-```
-
-Style manifests live under `.gpt-image2-agent/styles/<name>/style.json` and can store a style prompt, presets and optional style references.
+Manifests live under `.gpt-image2-agent/styles/<name>/style.json`. They can store style instructions, presets and optional references. A style's inherited presets remain subject to the current validation rules, including incompatible text/no-text modes.

@@ -1,44 +1,242 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/AlekseiUL/gpt-image-2-agent-kit/schemas/receipt.v1.schema.json",
+  "$id": "https://github.com/AlekseiUL/gpt-image-2-5-agent-kit/schemas/receipt.v1.schema.json",
   "title": "GPT Image 2.5 Agent Kit receipt v1",
   "type": "object",
-  "required": ["schema", "timestamp_utc", "status", "dry_run", "backend", "host_model", "image_model", "quality", "aspect", "size", "output_path", "prompt_sha256", "refs"],
+  "required": [
+    "schema",
+    "timestamp_utc",
+    "status",
+    "dry_run",
+    "backend",
+    "host_model",
+    "image_model",
+    "quality",
+    "aspect",
+    "size",
+    "output_path",
+    "prompt_sha256",
+    "refs"
+  ],
   "properties": {
-    "schema": {"const": "gpt-image2-agent.receipt.v1"},
-    "timestamp_utc": {"type": "string"},
-    "status": {"type": "string", "enum": ["planned", "pending", "success", "error"]},
-    "dry_run": {"type": "boolean"},
-    "backend": {"type": "string"},
-    "host_model": {"type": "string"},
-    "image_model": {"type": "string"},
-    "quality": {"type": "string", "enum": ["low", "medium", "high", "xhigh", "max", "auto"]},
-    "aspect": {"type": "string", "enum": ["landscape", "square", "portrait", "custom", "auto"]},
-    "size": {"type": "string"},
-    "background": {"type": "string", "enum": ["opaque", "transparent", "auto"]},
-    "output_format": {"const": "png"},
-    "action": {"type": "string", "enum": ["auto", "generate", "edit"]},
-    "output_path": {"type": "string"},
-    "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "schema": {
+      "const": "gpt-image2-agent.receipt.v1"
+    },
+    "timestamp_utc": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "pending",
+        "success",
+        "error"
+      ]
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "backend": {
+      "type": "string"
+    },
+    "host_model": {
+      "type": "string"
+    },
+    "image_model": {
+      "type": "string"
+    },
+    "quality": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "auto"
+      ]
+    },
+    "aspect": {
+      "type": "string",
+      "enum": [
+        "landscape",
+        "square",
+        "portrait",
+        "custom",
+        "auto"
+      ]
+    },
+    "size": {
+      "type": "string"
+    },
+    "background": {
+      "type": "string",
+      "enum": [
+        "opaque",
+        "transparent",
+        "auto"
+      ]
+    },
+    "output_format": {
+      "type": "string",
+      "enum": [
+        "png",
+        "jpeg",
+        "webp"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "generate",
+        "edit"
+      ]
+    },
+    "output_path": {
+      "type": "string"
+    },
+    "prompt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "refs": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["path", "sha256", "bytes", "suffix"],
+        "required": [
+          "path",
+          "sha256",
+          "bytes",
+          "suffix"
+        ],
         "properties": {
-          "path": {"type": "string"},
-          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-          "bytes": {"type": "integer", "minimum": 0},
-          "suffix": {"type": "string"}
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "suffix": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       }
     },
-    "prompt": {"type": "string"},
-    "identity": {"type": ["string", "null"]},
-    "style": {"type": ["string", "null"]},
-    "edit_image": {"type": ["string", "null"]},
-    "error_class": {"type": "string"}
+    "prompt": {
+      "type": "string"
+    },
+    "identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "style": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "edit_image": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "error_class": {
+      "type": "string"
+    },
+    "output_compression": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "reference_roles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "edit_base",
+          "identity",
+          "style",
+          "logo",
+          "layout",
+          "general"
+        ]
+      }
+    },
+    "mask": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256",
+        "bytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "actual_output": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "format",
+        "mode",
+        "bytes",
+        "sha256"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "format": {
+          "enum": [
+            "png",
+            "jpeg",
+            "webp"
+          ]
+        },
+        "mode": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": true
 }

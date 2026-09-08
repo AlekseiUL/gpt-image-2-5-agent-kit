@@ -1,0 +1,6 @@
+Create a landscape editorial cover about practical AI-agent workflows. One clear focal object on a dark graphite background; keep a clean, high-contrast title region.
+Render these two lines exactly once, verbatim, with the specified line break:
+"АГЕНТЫ БЕЗ ХАОСА"
+"ЧАСТЬ ТРЕТЬЯ"
+Typography: large bold condensed sans-serif for the first line, smaller second line, warm white text, generous margins.
+Do not translate, shorten, change case or punctuation, duplicate the title, or add other lettering. Keep any person clear of the text region.

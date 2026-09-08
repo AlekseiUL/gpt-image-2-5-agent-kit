@@ -5,9 +5,10 @@ from pathlib import Path
 
 import pytest
 from jsonschema import validate
+from PIL import Image
 
-from gpt_image2_agent import cli
-from gpt_image2_agent.library import save_identity, save_style
+from gpt_image25_agent import cli
+from gpt_image25_agent.library import save_identity, save_style
 
 
 def no_live_call(**kwargs):
@@ -47,7 +48,7 @@ def test_default_model_and_compatible_defaults(tmp_path, capsys):
     assert receipt["background"] == "opaque"
     assert receipt["size"] == "1536x1024"
     assert receipt["aspect"] == "landscape"
-    assert Path(receipt["output_path"]).parent == tmp_path / "generated" / "gpt-image-2"
+    assert Path(receipt["output_path"]).parent == tmp_path / "generated" / "gpt-image-2.5"
 
 
 @pytest.mark.parametrize("size, aspect", [("auto", "auto"), ("2160x3840", "custom")])
@@ -60,8 +61,6 @@ def test_size_auto_and_portrait_4k_receipt(size, aspect, tmp_path, capsys):
 
 
 @pytest.mark.parametrize("options", [
-    ["--image-model", "gpt-image-2", "--quality", "max"],
-    ["--image-model", "gpt-image-2", "--quality", "xhigh"],
     ["--size", "1025x1024"],
     ["--size", "3840x3840"],
     ["--size", "0x1024"],
@@ -77,11 +76,20 @@ def test_invalid_options_fail_before_live_side_effects(options, monkeypatch, tmp
     assert list(tmp_path.iterdir()) == []
 
 
-def test_legacy_model_remains_selectable(tmp_path, capsys):
-    assert cli.main(["robot", "--root", str(tmp_path), "--image-model", "gpt-image-2", "--quality", "high", "--json"]) == 0
-    receipt = json.loads(capsys.readouterr().out)["receipt"]
-    assert receipt["image_model"] == "gpt-image-2"
-    assert receipt["quality"] == "high"
+@pytest.mark.parametrize("quality", ["low", "medium", "high", "xhigh", "max", "auto"])
+def test_legacy_model_fails_before_auth_references_or_writes(quality, monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(cli, "read_token", no_live_call)
+    monkeypatch.setattr(cli, "generate_image", no_live_call)
+    monkeypatch.setattr(cli, "validate_refs", no_live_call)
+    with pytest.raises(SystemExit) as error:
+        cli.main([
+            "robot", "--root", str(tmp_path), "--image-model", "gpt-image-2",
+            "--quality", quality, "--ref", str(tmp_path / "missing.png"),
+            "--out", str(tmp_path / "nested" / "out.png"), "--live", "--json",
+        ])
+    assert error.value.code == 2
+    assert "invalid choice" in capsys.readouterr().err
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_markdown_shows_requested_models_and_new_options(tmp_path, capsys):
@@ -105,9 +113,9 @@ def test_edit_requires_base_image(monkeypatch, tmp_path, capsys):
 
 def test_live_edit_forwards_same_options_as_receipt_and_base_first(monkeypatch, tmp_path, capsys):
     refs = []
-    for name in ["base", "identity", "style", "extra"]:
+    for index, name in enumerate(["base", "identity", "style", "extra"]):
         ref = tmp_path / f"{name}.png"
-        ref.write_bytes(b"\x89PNG\r\n\x1a\n" + name.encode())
+        Image.new("RGBA", (2, 2), (index * 50, 20, 30, 255)).save(ref)
         refs.append(ref)
     save_identity(tmp_path, "person", [refs[1]])
     save_style(tmp_path, "brand", prompt="blue palette", refs=[refs[2]])
@@ -115,7 +123,8 @@ def test_live_edit_forwards_same_options_as_receipt_and_base_first(monkeypatch, 
 
     def fake_generate(**kwargs):
         sent.update(kwargs)
-        kwargs["out"].write_bytes(b"\x89PNG\r\n\x1a\nmock")
+        kwargs["out"].parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGBA", (2, 2), (20, 30, 40, 255)).save(kwargs["out"])
         return kwargs["out"]
 
     monkeypatch.setattr(cli, "read_token", lambda **kwargs: "mock-token")
@@ -143,8 +152,9 @@ def test_live_edit_forwards_same_options_as_receipt_and_base_first(monkeypatch, 
 
 
 def test_existing_receipt_v1_still_valid_without_new_fields(tmp_path, capsys):
-    assert cli.main(["robot", "--root", str(tmp_path), "--image-model", "gpt-image-2", "--json"]) == 0
+    assert cli.main(["robot", "--root", str(tmp_path), "--json"]) == 0
     receipt = json.loads(capsys.readouterr().out)["receipt"]
+    receipt["image_model"] = "gpt-image-2"
     for key in ["background", "output_format", "action"]:
         receipt.pop(key)
     validate(receipt, json.loads(Path("schemas/receipt.v1.schema.json").read_text()))

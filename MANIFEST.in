@@ -1,7 +1,7 @@
-include README.md LICENSE NOTICE.md SECURITY.md
-recursive-include docs *.md
+include README.md LICENSE NOTICE.md SECURITY.md CHANGELOG.md
+recursive-include docs *.md *.json
 recursive-include docs/assets *.jpg *.jpeg *.png *.webp
 recursive-include schemas *.json
-recursive-include examples *.md *.json
+recursive-include examples *.md *.json *.txt
 recursive-include scripts *.py
 recursive-include tests *.py
