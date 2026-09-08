@@ -23,15 +23,18 @@ Reference images are recorded as paths, hashes, sizes and suffixes. Raw image by
 ```json
 {
   "schema": "gpt-image2-agent.receipt.v1",
-  "timestamp_utc": "2026-06-10T00:00:00+00:00",
+  "timestamp_utc": "2026-09-08T00:00:00+00:00",
   "status": "planned",
   "dry_run": true,
   "backend": "https://chatgpt.com/backend-api/codex",
   "host_model": "gpt-5.5",
-  "image_model": "gpt-image-2",
+  "image_model": "gpt-image-2.5-sunburst",
   "quality": "low",
   "aspect": "square",
   "size": "1024x1024",
+  "background": "opaque",
+  "output_format": "png",
+  "action": "auto",
   "output_path": "generated/gpt-image-2/example.png",
   "prompt_sha256": "...",
   "refs": [
@@ -47,6 +50,14 @@ Reference images are recorded as paths, hashes, sizes and suffixes. Raw image by
   "edit_image": null
 }
 ```
+
+## GPT Image 2.5 fields
+
+Version 0.2.0 keeps schema v1. New receipts include `background` (`opaque`, `transparent`, or `auto`), `output_format` (`png`) and `action` (`auto` or `edit`). These added fields are optional in the schema so older v1 receipts remain valid.
+
+`image_model` records the selected image model; `host_model` records the separate host. For 2.5, `quality` can also be `xhigh` or `max`. When `--size` is supplied, `aspect` is `custom` for dimensions or `auto` for automatic size, and `size` records the supplied choice. An edit base produces `action: "edit"`; reference-only planning uses `auto`.
+
+These fields describe the requested configuration. A planned receipt is not evidence that the selected models are accessible through the live backend. See the [migration notes](migration-gpt-image-2.5.md).
 
 ## Why receipts exist
 

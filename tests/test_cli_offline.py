@@ -266,7 +266,7 @@ def test_cli_review_markdown_dry_run(tmp_path):
     root.mkdir()
     proc = run_cli(["robot painter", "--root", str(root), "--preset", "no-text", "--dry-run", "--review-markdown"], cwd=Path.cwd())
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert proc.stdout.startswith("# GPT Image 2 generation review")
+    assert proc.stdout.startswith("# GPT Image 2.5 generation review")
     assert "## Final prompt" in proc.stdout
     assert "robot painter" in proc.stdout
     assert "Network call:** no" in proc.stdout

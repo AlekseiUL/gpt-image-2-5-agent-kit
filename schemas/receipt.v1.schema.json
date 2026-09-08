@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/AlekseiUL/gpt-image-2-agent-kit/schemas/receipt.v1.schema.json",
-  "title": "GPT Image 2 Agent Kit receipt v1",
+  "title": "GPT Image 2.5 Agent Kit receipt v1",
   "type": "object",
   "required": ["schema", "timestamp_utc", "status", "dry_run", "backend", "host_model", "image_model", "quality", "aspect", "size", "output_path", "prompt_sha256", "refs"],
   "properties": {
@@ -12,9 +12,12 @@
     "backend": {"type": "string"},
     "host_model": {"type": "string"},
     "image_model": {"type": "string"},
-    "quality": {"type": "string", "enum": ["low", "medium", "high"]},
-    "aspect": {"type": "string", "enum": ["landscape", "square", "portrait"]},
+    "quality": {"type": "string", "enum": ["low", "medium", "high", "xhigh", "max", "auto"]},
+    "aspect": {"type": "string", "enum": ["landscape", "square", "portrait", "custom", "auto"]},
     "size": {"type": "string"},
+    "background": {"type": "string", "enum": ["opaque", "transparent", "auto"]},
+    "output_format": {"const": "png"},
+    "action": {"type": "string", "enum": ["auto", "generate", "edit"]},
     "output_path": {"type": "string"},
     "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "refs": {

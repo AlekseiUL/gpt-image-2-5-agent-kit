@@ -65,7 +65,11 @@ gpt-image2-agent \
   --dry-run
 ```
 
-For live mode, add `--live` and your token provider. The edit image is passed as a reference image with explicit edit instructions.
+The default image model is `gpt-image-2.5-sunburst`. Edit mode puts the base image first among references and sends `action: "edit"`, along with the preservation instructions. `--edit` requires `--edit-image`; identity/style references alone do not supply the edit base. Requests without an edit base use `action: "auto"`.
+
+For a transparent cutout, use `--edit "remove the background, keep the person and lighting" --background transparent`. Output is PNG. The toolkit does not send an `input_fidelity` parameter or guarantee exact preservation of the source.
+
+For live mode, add `--live` and your token provider. The ChatGPT/Codex route remains experimental, and real 2.5 live generation has not been validated for this migration. See the [migration notes](migration-gpt-image-2.5.md).
 
 ## Agent policy
 

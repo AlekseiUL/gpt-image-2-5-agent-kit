@@ -18,6 +18,8 @@ Schema value:
 
 Receipts are audit records for dry-run/live planning and generation. By default they store a prompt hash, not the raw prompt.
 
+The 0.2.0 migration retains receipt v1 and expands image-model/quality/size metadata. New receipts include `background`, `output_format` and `action`; these fields remain optional for older receipts. See [receipt fields](receipt-schema.md) and the [migration notes](migration-gpt-image-2.5.md).
+
 ## Identity manifest
 
 Schema value:

@@ -29,6 +29,8 @@ These are local memory for an agent. They can contain private face or brand refe
 
 Live mode sends the final prompt and selected reference images to the configured backend. This may include face references or style boards. Use only with material you have the right to upload.
 
+The 2.5 migration has not been validated with a real live request. The existing ChatGPT/Codex route remains experimental; model support in the official OpenAI API does not establish availability through this route. No official API backend is implemented.
+
 ## Token handling
 
 Supported token providers:

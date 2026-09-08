@@ -5,7 +5,8 @@ import json
 from pathlib import Path
 
 from .auth import AuthError, read_token
-from .client import API_IMAGE_MODEL, CODEX_BASE_URL, DEFAULT_HOST_MODEL, QUALITIES, SIZES, ClientError, generate_image
+from .client import CODEX_BASE_URL, DEFAULT_HOST_MODEL, ClientError, generate_image
+from .models import BACKGROUNDS, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, QUALITIES, SIZES, resolve_size, validate_image_options
 from .files import PolicyError, default_root, read_prompt, resolve_output_path, validate_refs
 from .library import list_library, load_identity_refs, load_style, save_identity, save_style
 from .prompts import available_presets, build_prompt
@@ -15,7 +16,7 @@ from .review import build_review_markdown
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Agent-safe GPT Image 2 prompt/reference toolkit")
+    parser = argparse.ArgumentParser(description="Agent-safe GPT Image 2.5 prompt/reference toolkit")
     parser.add_argument("prompt", nargs="?", help="Image request. Use --prompt-file for long prompts.")
     parser.add_argument("--prompt-file", type=Path, help="Read UTF-8 prompt from a text file")
     parser.add_argument("--preset", action="append", choices=available_presets(), default=[], help="Prompt preset; repeatable")
@@ -28,7 +29,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--out", type=Path, help="Output PNG path")
     parser.add_argument("--receipt", type=Path, help="Optional JSON receipt path. In dry-run this is the only intentional write.")
     parser.add_argument("--quality", choices=sorted(QUALITIES), default="medium")
+    parser.add_argument("--image-model", choices=IMAGE_MODELS, default=DEFAULT_IMAGE_MODEL, help="Image tool model; Sunburst by default, Flare for faster everyday generation")
     parser.add_argument("--aspect", choices=sorted(SIZES), default="landscape")
+    parser.add_argument("--size", help="Image size: auto or WIDTHxHEIGHT (multiples of 16). Overrides --aspect.")
+    parser.add_argument("--background", choices=BACKGROUNDS, default="opaque", help="PNG background mode")
     parser.add_argument("--host-model", default=DEFAULT_HOST_MODEL)
     parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--json", action="store_true", help="Print compact JSON result")
@@ -80,6 +84,12 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.edit and (args.prompt or args.prompt_file):
             raise PolicyError("Pass either --edit or a normal prompt/--prompt-file, not both.")
+        if args.edit and not args.edit_image:
+            raise PolicyError("--edit requires --edit-image with the base image to modify.")
+        size = resolve_size(args.aspect, args.size)
+        validate_image_options(image_model=args.image_model, quality=args.quality, size=size, background=args.background)
+        aspect = ("auto" if size == "auto" else "custom") if args.size is not None else args.aspect
+        action = "edit" if args.edit_image else "auto"
         prompt_source = args.edit or args.prompt
         raw_prompt = read_prompt(prompt_source, args.prompt_file, root=root, allow_prompt_file_outside=args.allow_prompt_file_outside_root)
         refs = validate_refs(args.ref, root=root, allow_outside=args.allow_ref_outside_root)
@@ -95,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         edit_refs: list[Path] = []
         if args.edit_image:
             edit_refs = validate_refs([args.edit_image], root=root, allow_outside=args.allow_ref_outside_root)
-        all_refs = validate_refs(identity_refs + style_refs + edit_refs + refs, root=root, allow_outside=args.allow_ref_outside_root)
+        all_refs = validate_refs(edit_refs + identity_refs + style_refs + refs, root=root, allow_outside=args.allow_ref_outside_root)
         presets = list(dict.fromkeys([*args.preset, *style_presets]))
         final_prompt = build_prompt(
             raw_prompt,
@@ -107,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
             edit_mode=bool(args.edit_image),
         )
         out = resolve_output_path(args.out, raw_prompt, root=root, allow_outside=args.allow_output_outside_root, overwrite=args.overwrite, create_parent=not dry_run)
-        receipt = build_receipt(status="planned" if dry_run else "pending", dry_run=dry_run, backend=CODEX_BASE_URL, host_model=args.host_model, image_model=API_IMAGE_MODEL, quality=args.quality, aspect=args.aspect, size=SIZES[args.aspect], out=out, prompt=final_prompt, refs=all_refs, include_prompt=args.include_prompt_in_receipt)
+        receipt = build_receipt(status="planned" if dry_run else "pending", dry_run=dry_run, backend=CODEX_BASE_URL, host_model=args.host_model, image_model=args.image_model, quality=args.quality, aspect=aspect, size=size, background=args.background, action=action, out=out, prompt=final_prompt, refs=all_refs, include_prompt=args.include_prompt_in_receipt)
         receipt["identity"] = args.identity
         receipt["style"] = args.style
         receipt["edit_image"] = str(args.edit_image) if args.edit_image else None
@@ -120,10 +130,14 @@ def main(argv: list[str] | None = None) -> int:
                 print(build_review_markdown(
                     dry_run=True,
                     backend=CODEX_BASE_URL,
+                    image_model=args.image_model,
+                    host_model=args.host_model,
                     final_prompt=final_prompt,
                     quality=args.quality,
-                    aspect=args.aspect,
-                    size=SIZES[args.aspect],
+                    aspect=aspect,
+                    size=size,
+                    background=args.background,
+                    action=action,
                     out=out,
                     refs=all_refs,
                     identity=args.identity,
@@ -135,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
                 emit(result, as_json=args.json)
             return 0
         token = read_token(provider=args.auth_provider, token_env=args.token_env, token_file=args.token_file, token_command=args.token_command)
-        generated = generate_image(prompt=final_prompt, refs=all_refs, out=out, token=token, host_model=args.host_model, quality=args.quality, aspect=args.aspect, timeout=args.timeout, overwrite=args.overwrite)
+        generated = generate_image(prompt=final_prompt, refs=all_refs, out=out, token=token, host_model=args.host_model, image_model=args.image_model, quality=args.quality, aspect=args.aspect, size=size, background=args.background, action=action, timeout=args.timeout, overwrite=args.overwrite)
         receipt["status"] = "success"
         result = {"success": True, "dry_run": False, "image": str(generated), "receipt": receipt}
         if args.receipt:
@@ -145,10 +159,14 @@ def main(argv: list[str] | None = None) -> int:
             print(build_review_markdown(
                 dry_run=False,
                 backend=CODEX_BASE_URL,
+                image_model=args.image_model,
+                host_model=args.host_model,
                 final_prompt=final_prompt,
                 quality=args.quality,
-                aspect=args.aspect,
-                size=SIZES[args.aspect],
+                aspect=aspect,
+                size=size,
+                background=args.background,
+                action=action,
                 out=generated,
                 refs=all_refs,
                 identity=args.identity,

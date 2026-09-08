@@ -1,6 +1,6 @@
 # Comparison and positioning
 
-GPT Image 2 tools usually fall into a few groups:
+GPT Image tools usually fall into a few groups:
 
 - simple prompt-to-image CLIs;
 - web or desktop UIs with drag-and-drop references;
@@ -8,7 +8,7 @@ GPT Image 2 tools usually fall into a few groups:
 - browser automation wrappers;
 - direct API wrappers.
 
-GPT Image 2 Agent Kit is intentionally different.
+GPT Image 2.5 Agent Kit is intentionally different.
 
 ## Main differentiator
 

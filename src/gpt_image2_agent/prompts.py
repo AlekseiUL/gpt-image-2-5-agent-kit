@@ -7,7 +7,7 @@ PRESETS: dict[str, str] = {
     "product": "Create a polished product/landing-page hero image with clear subject separation, premium lighting, useful empty space for layout, and no fake UI text.",
     "no-text": "Do not generate text, captions, watermarks, labels, signatures, UI fragments, or random letters inside the image.",
     "russian-text": "If text is explicitly requested, use short readable Cyrillic, clean typography, correct spelling, and avoid small decorative text.",
-    "edit": "Treat the supplied edit/base image as the image to modify. Preserve its core composition and identity unless the user explicitly asks to change them.",
+    "edit": "Treat the supplied edit/base image as the image to modify. When an edit/base image is selected, it is the first supplied image; subsequent images are references. Preserve its core composition and identity unless the user explicitly asks to change them.",
     "brand-style": "Follow the supplied brand/style references consistently: color palette, lighting, composition rhythm, materials, typography mood, and visual density.",
 }
 
