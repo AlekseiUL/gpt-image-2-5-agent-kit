@@ -38,6 +38,6 @@ Flare edit:
 
 The model names record the requested payload, not independent backend model attestation. These two checks establish generation and reference editing for this account/route at this time; they do not guarantee future account access, latency or arbitrary prompt quality.
 
-The actual dimensions differed from the request and are reported without silently resizing. Masks, transparency, JPEG/WebP, compression, extended quality and other sizes are validated and covered by mocked request tests, but were not live-tested for this release. The experimental subscription backend may reject or handle optional settings differently from the official API. A mismatched or corrupt output is an error, never silently converted or promoted to success.
+The actual dimensions differed from the request and are reported without silently resizing. Masks, transparency, JPEG/WebP, compression, extended quality and other sizes are validated and covered by mocked request tests, but were not live-tested for this release. The experimental subscription backend may reject or handle optional settings differently from the official API. An output with the wrong file format or corrupt image data is an error, never silently converted or promoted to success.
 
 The toolkit does not implement an official OpenAI API backend, persistent server-side conversation IDs, automatic retries or an automatic model fallback. Further edits use an explicitly supplied local base image.

@@ -57,7 +57,7 @@ gpt-image25-agent \
 
 `--edit` and repeatable `--preserve` require `--edit-image`. The base is the first image so its role is unambiguous. With a base, the toolkit requests `action: "edit"`; without one, the default action is `auto`. `--action generate` explicitly requests a new image and cannot be combined with an edit base; `--action edit` requires one.
 
-Write separate, specific instructions for what changes and what stays. These are model guidance, not guarantees of exact identity, geometry or unchanged pixels. The payload does not add an unsupported `input_fidelity` parameter.
+Write separate, specific instructions for what changes and what stays. These are model guidance, not guarantees of exact identity, geometry or unchanged pixels. The payload does not send an `input_fidelity` parameter.
 
 For a transparent cutout, request it explicitly and use an alpha-capable output format:
 
