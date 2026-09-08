@@ -3,12 +3,12 @@ from __future__ import annotations
 import ast
 import pathlib
 import re
-import sys
 import subprocess
+import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BAD_PATTERNS = {
-    "private_path": re.compile(r"/Users/[^/\s]+|MIKE_CENTER|agents/jesse|mike-jesse", re.I),
+    "private_path": re.compile(r"/Users/[^/\s]+|MIKE_CENTER|agents/jesse|mike-jesse", re.IGNORECASE),
     "token_literal": re.compile(r"(ghp_[A-Za-z0-9_]+|(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{16,}|Bearer\s+[A-Za-z0-9._~+/=-]{12,})"),
     "bytecode": re.compile(r"(__pycache__|\.pyc$)"),
 }
@@ -32,7 +32,7 @@ for path in candidates:
     if path.is_file() and path.suffix == ".py":
         try:
             ast.parse(path.read_text(encoding="utf-8"))
-        except Exception as exc:
+        except (SyntaxError, UnicodeError, OSError, ValueError) as exc:
             findings.append(("syntax", rel, 0, str(exc)))
     if not path.is_file() or (path.suffix not in TEXT_EXTS and path.name != ".gitignore") or rel in SKIP_FILES:
         continue

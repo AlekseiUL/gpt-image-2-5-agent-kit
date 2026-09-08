@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .redaction import sanitize_error_text
 
+
 class AuthError(RuntimeError):
     pass
 
@@ -25,7 +26,7 @@ def read_token(*, provider: str, token_env: str = "CHATGPT_CODEX_ACCESS_TOKEN", 
             argv = shlex.split(token_command)
             if not argv:
                 raise AuthError("token command is empty")
-            completed = subprocess.run(argv, shell=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, check=False)
+            completed = subprocess.run(argv, shell=False, text=True, capture_output=True, timeout=15, check=False)
         except AuthError:
             raise
         except Exception as exc:

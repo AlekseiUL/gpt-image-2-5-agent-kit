@@ -7,11 +7,38 @@ from pathlib import Path
 
 from .auth import AuthError, read_token
 from .client import CODEX_BASE_URL, DEFAULT_HOST_MODEL, ClientError, generate_image
-from .models import BACKGROUNDS, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, QUALITIES, SIZES, OUTPUT_FORMATS, resolve_size, validate_image_options
-from .files import PolicyError, default_root, read_prompt, resolve_output_path, validate_refs, validate_mask
-from .library import list_library, load_identity_refs, load_style, save_identity, save_style
+from .files import (
+    PolicyError,
+    default_root,
+    read_prompt,
+    resolve_output_path,
+    validate_mask,
+    validate_refs,
+)
+from .library import (
+    list_library,
+    load_identity_refs,
+    load_style,
+    save_identity,
+    save_style,
+)
+from .models import (
+    BACKGROUNDS,
+    DEFAULT_IMAGE_MODEL,
+    IMAGE_MODELS,
+    OUTPUT_FORMATS,
+    QUALITIES,
+    SIZES,
+    resolve_size,
+    validate_image_options,
+)
 from .prompts import REFERENCE_ROLES, available_presets, build_prompt
-from .receipts import build_receipt, write_receipt, validate_receipt_path, actual_output_metadata
+from .receipts import (
+    actual_output_metadata,
+    build_receipt,
+    validate_receipt_path,
+    write_receipt,
+)
 from .redaction import sanitize_error_text
 from .review import build_review_markdown
 

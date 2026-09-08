@@ -23,7 +23,7 @@ Homepage = "https://github.com/AlekseiUL/gpt-image-2-5-agent-kit"
 Issues = "https://github.com/AlekseiUL/gpt-image-2-5-agent-kit/issues"
 
 [project.optional-dependencies]
-test = ["pytest>=8", "jsonschema>=4", "ruff>=0.15", "build>=1.2"]
+test = ["pytest>=8", "jsonschema>=4", "ruff==0.16.6", "build>=1.2"]
 
 [project.scripts]
 gpt-image25-agent = "gpt_image25_agent.cli:main"

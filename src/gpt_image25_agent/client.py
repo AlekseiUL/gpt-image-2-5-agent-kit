@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import base64
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from .files import atomic_write_image, ref_to_data_url, validate_mask
 from .models import DEFAULT_IMAGE_MODEL, resolve_size, validate_image_options
@@ -218,15 +219,17 @@ def generate_image(
     state = _ImageStreamState()
     timeout_cfg = httpx.Timeout(timeout, connect=30.0, read=timeout, write=30.0, pool=30.0)
     try:
-        with httpx.Client(timeout=timeout_cfg, headers=headers) as http:
-            with http.stream("POST", f"{CODEX_BASE_URL}/responses", json=payload) as response:
-                try:
-                    response.raise_for_status()
-                except httpx.HTTPStatusError as exc:
-                    exc.response.read()
-                    raise ClientError(f"backend HTTP {exc.response.status_code}: {sanitize_error_text(exc.response.text)}") from exc
-                for event in iter_sse_json(response):
-                    state.consume(event)
+        with (
+            httpx.Client(timeout=timeout_cfg, headers=headers) as http,
+            http.stream("POST", f"{CODEX_BASE_URL}/responses", json=payload) as response,
+        ):
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                exc.response.read()
+                raise ClientError(f"backend HTTP {exc.response.status_code}: {sanitize_error_text(exc.response.text)}") from exc
+            for event in iter_sse_json(response):
+                state.consume(event)
     except ClientError:
         raise
     except Exception as exc:

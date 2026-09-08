@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+from typing import ClassVar
 
 import pytest
 from PIL import Image
@@ -44,7 +45,7 @@ class StreamCtx:
 
 class FakeClient:
     response = None
-    calls = []
+    calls: ClassVar[list] = []
 
     def __init__(self, *args, **kwargs):
         pass

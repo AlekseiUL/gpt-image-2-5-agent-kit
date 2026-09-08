@@ -2,7 +2,16 @@ from __future__ import annotations
 
 import pytest
 
-from gpt_image25_agent.models import BACKGROUNDS, DEFAULT_IMAGE_MODEL, IMAGE_MODELS, OUTPUT_FORMATS, QUALITIES, SIZES, resolve_size, validate_image_options
+from gpt_image25_agent.models import (
+    BACKGROUNDS,
+    DEFAULT_IMAGE_MODEL,
+    IMAGE_MODELS,
+    OUTPUT_FORMATS,
+    QUALITIES,
+    SIZES,
+    resolve_size,
+    validate_image_options,
+)
 
 
 def validate(**options):

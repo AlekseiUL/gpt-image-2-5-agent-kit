@@ -39,15 +39,15 @@ def default_root(root: Path | None = None) -> Path:
 
 
 def resolve_output_path(out: Path | None, prompt_slug: str, *, root: Path, allow_outside: bool, overwrite: bool, create_parent: bool, output_format: str = "png") -> Path:
-    from datetime import datetime
     import re
     import uuid
+    from datetime import datetime
     extensions = _output_extensions(output_format)
     safe_root = default_root(root)
     if out is None:
         slug = re.sub(r"[^A-Za-z0-9._-]+", "-", prompt_slug.strip().lower()).strip("-._")[:42] or "gpt-image-2.5"
         suffix = ".jpg" if output_format == "jpeg" else f".{output_format}"
-        candidate = safe_root / "generated" / "gpt-image-2.5" / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{slug}-{uuid.uuid4().hex[:6]}{suffix}"
+        candidate = safe_root / "generated" / "gpt-image-2.5" / f"{datetime.now().astimezone().strftime('%Y%m%d-%H%M%S')}-{slug}-{uuid.uuid4().hex[:6]}{suffix}"
     else:
         candidate = out.expanduser()
     if candidate.suffix.lower() not in extensions:

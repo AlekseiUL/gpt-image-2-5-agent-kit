@@ -23,7 +23,7 @@ def run_cli(args, cwd: Path, env=None):
     e = os.environ.copy()
     if env:
         e.update(env)
-    return subprocess.run([sys.executable, "-m", "gpt_image25_agent", *args], cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=e)
+    return subprocess.run([sys.executable, "-m", "gpt_image25_agent", *args], cwd=cwd, text=True, capture_output=True, env=e, check=False)
 
 
 def test_build_prompt_presets_and_refs():
@@ -109,6 +109,7 @@ def test_atomic_write_png_validates_png_and_no_partial(tmp_path):
         f.atomic_write_png(out, b"not png", overwrite=False)
     assert not out.exists()
     from io import BytesIO
+
     from PIL import Image
     buffer = BytesIO()
     Image.new("RGB", (3, 2), "blue").save(buffer, format="PNG")
@@ -287,8 +288,9 @@ def test_cli_review_markdown_rejects_json_combo(tmp_path):
 
 def test_schema_files_validate_generated_artifacts(tmp_path):
     from jsonschema import validate
-    from gpt_image25_agent.receipts import build_receipt
+
     from gpt_image25_agent.library import save_identity, save_style
+    from gpt_image25_agent.receipts import build_receipt
 
     root = tmp_path / "root"
     root.mkdir()

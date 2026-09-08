@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .files import sha256_file, assert_inside, PolicyError
+from .files import PolicyError, assert_inside, sha256_file
 
 
 def prompt_hash(prompt: str) -> str:
