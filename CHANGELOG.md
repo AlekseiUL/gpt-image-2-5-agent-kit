@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add a standalone Russian product guide covering the toolkit's inputs, components, execution flow, model choice, common workflows, validation and limits.
+
 ## 0.3.1 — 2026-09-09
 
 Reliability hardening after independent review of the 0.3.0 release.

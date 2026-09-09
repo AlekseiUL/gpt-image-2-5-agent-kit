@@ -1,4 +1,4 @@
-include README.md LICENSE NOTICE.md SECURITY.md CHANGELOG.md
+include README.md README.ru.md LICENSE NOTICE.md SECURITY.md CHANGELOG.md
 recursive-include docs *.md *.json
 recursive-include docs/assets *.png
 recursive-include schemas *.json

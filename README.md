@@ -1,5 +1,7 @@
 # GPT Image 2.5 Agent Kit
 
+[Русская документация](README.ru.md) | English
+
 ![GPT Image 2.5 Agent Kit: generated photography, illustration and typography](docs/assets/gpt-image-2-5-agent-kit-hero.png)
 
 ![CI](https://github.com/AlekseiUL/gpt-image-2-5-agent-kit/actions/workflows/repository-quality.yml/badge.svg)
@@ -159,6 +161,8 @@ python -m gpt_image25_agent --help
 ```
 
 ## По-русски
+
+Полное русское описание продукта, его состава, рабочего процесса и ограничений находится в [README.ru.md](README.ru.md).
 
 Версия **0.3.1** — набор для GPT Image 2.5 с командой `gpt-image25-agent`. По умолчанию Sunburst; Flare выбирается явно. Старые модели удалены из рабочего маршрута. Референсы полностью декодируются до отправки, неиспользуемые partial previews отключены, а запрошенный receipt фиксирует и live-сбой без секретов.
 
