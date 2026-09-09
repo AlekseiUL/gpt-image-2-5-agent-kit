@@ -14,8 +14,10 @@ from gpt_image25_agent.redaction import sanitize_error_text
 
 
 def png(path: Path, size: int = 16) -> Path:
+    from PIL import Image
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * size)
+    Image.new("RGB", (size, size), "blue").save(path, format="PNG")
     return path
 
 
@@ -156,6 +158,28 @@ def test_cli_missing_token_live_fails_cleanly(tmp_path):
     assert "traceback" not in proc.stderr.lower()
 
 
+def test_cli_missing_token_writes_schema_valid_error_receipt_when_requested(tmp_path):
+    from jsonschema import validate
+
+    root = tmp_path / "root"
+    root.mkdir()
+    receipt = root / "failed.receipt.json"
+    proc = run_cli(
+        ["robot", "--root", str(root), "--live", "--receipt", str(receipt), "--json"],
+        cwd=Path.cwd(),
+        env={"CHATGPT_CODEX_ACCESS_TOKEN": ""},
+    )
+    assert proc.returncode == 2
+    payload = json.loads(proc.stdout)
+    assert payload["receipt_path"] == str(receipt)
+    data = json.loads(receipt.read_text())
+    assert data["status"] == "error"
+    assert data["error_class"] == "AuthError"
+    assert "prompt" not in data
+    schema = json.loads((Path("schemas") / "receipt.v1.schema.json").read_text())
+    validate(data, schema)
+
+
 def test_receipt_excludes_prompt_by_default(tmp_path):
     root = tmp_path / "root"
     root.mkdir()
@@ -179,8 +203,10 @@ def test_receipt_can_include_prompt_explicitly(tmp_path):
 
 
 def jpg(path: Path) -> Path:
+    from PIL import Image
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"\xff\xd8\xff\xe0" + b"0" * 16)
+    Image.new("RGB", (16, 16), "blue").save(path, format="JPEG")
     return path
 
 
@@ -191,6 +217,15 @@ def test_ref_magic_bytes_reject_fake_png(tmp_path):
     fake.write_text("not an image", encoding="utf-8")
     with pytest.raises(f.PolicyError):
         f.validate_refs([fake], root=root, allow_outside=False)
+
+
+def test_ref_with_valid_magic_but_truncated_pixels_is_rejected(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    truncated = root / "truncated.png"
+    truncated.write_bytes(b"\x89PNG\r\n\x1a\ntruncated")
+    with pytest.raises(f.PolicyError, match="fully decodable"):
+        f.validate_refs([truncated], root=root, allow_outside=False)
 
 
 def test_cli_add_identity_then_use_it_in_dry_run(tmp_path):

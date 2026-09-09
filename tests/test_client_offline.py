@@ -46,9 +46,10 @@ class StreamCtx:
 class FakeClient:
     response = None
     calls: ClassVar[list] = []
+    init_kwargs: ClassVar[list[dict]] = []
 
     def __init__(self, *args, **kwargs):
-        pass
+        self.init_kwargs.append(kwargs)
 
     def __enter__(self):
         return self
@@ -64,6 +65,7 @@ class FakeClient:
 @pytest.fixture
 def fake_backend(monkeypatch):
     monkeypatch.setattr(FakeClient, "calls", [])
+    monkeypatch.setattr(FakeClient, "init_kwargs", [])
     monkeypatch.setattr(FakeClient, "response", None)
     monkeypatch.setattr("httpx.Client", FakeClient)
     return FakeClient
@@ -162,13 +164,14 @@ def test_selected_model_options_reach_mocked_request(fake_backend, tmp_path, ima
     out = generate(tmp_path, image_model=image_model, quality=quality, size="2048x1024", background="transparent")
     assert out.read_bytes() == png
     assert len(fake_backend.calls) == 1
+    assert fake_backend.init_kwargs[0]["headers"]["Authorization"] == "Bearer tok"
     args, kwargs = fake_backend.calls[0]
     assert args == ("POST", f"{client.CODEX_BASE_URL}/responses")
     payload = kwargs["json"]
     assert payload["model"] == "gpt-5.5"
     assert payload["tools"] == [{
         "type": "image_generation", "model": image_model, "size": "2048x1024", "quality": quality,
-        "output_format": "png", "background": "transparent", "action": "auto", "partial_images": 1,
+        "output_format": "png", "background": "transparent", "action": "auto", "partial_images": 0,
     }]
     assert "input_fidelity" not in json.dumps(payload)
 

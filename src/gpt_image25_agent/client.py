@@ -43,7 +43,9 @@ def build_payload(
     tool: dict[str, Any] = {
         "type": "image_generation", "model": image_model, "size": resolved_size,
         "quality": quality, "output_format": output_format, "background": background,
-        "action": action, "partial_images": 1,
+        # The CLI publishes only the final validated image. Asking for partial
+        # previews would add output-token cost without exposing any benefit.
+        "action": action, "partial_images": 0,
     }
     if output_compression is not None:
         tool["output_compression"] = output_compression
@@ -220,8 +222,8 @@ def generate_image(
     timeout_cfg = httpx.Timeout(timeout, connect=30.0, read=timeout, write=30.0, pool=30.0)
     try:
         with (
-            httpx.Client(timeout=timeout_cfg, headers=headers) as http,
-            http.stream("POST", f"{CODEX_BASE_URL}/responses", json=payload) as response,
+            httpx.Client(timeout=timeout_cfg, headers=headers) as client_http,
+            client_http.stream("POST", f"{CODEX_BASE_URL}/responses", json=payload) as response,
         ):
             try:
                 response.raise_for_status()

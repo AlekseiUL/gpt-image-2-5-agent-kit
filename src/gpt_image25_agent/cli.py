@@ -101,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     root = default_root(args.root)
     dry_run = args.dry_run or not args.live
+    receipt: dict | None = None
     try:
         if not math.isfinite(args.timeout) or args.timeout <= 0:
             raise PolicyError("--timeout must be a positive finite number.")
@@ -238,7 +239,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except (PolicyError, AuthError, ClientError, ValueError, OSError) as exc:
         err = sanitize_error_text(exc)
-        emit({"success": False, "error": err, "error_class": type(exc).__name__}, as_json=args.json)
+        failure = {"success": False, "error": err, "error_class": type(exc).__name__}
+        if not dry_run and args.receipt and receipt is not None:
+            error_receipt = dict(receipt)
+            error_receipt["status"] = "error"
+            error_receipt["error_class"] = type(exc).__name__
+            try:
+                write_receipt(
+                    args.receipt,
+                    error_receipt,
+                    root=root,
+                    allow_outside=args.allow_receipt_outside_root,
+                )
+                failure["receipt_path"] = str(args.receipt)
+            except (PolicyError, OSError) as receipt_exc:
+                failure["receipt_error"] = sanitize_error_text(receipt_exc)
+        emit(failure, as_json=args.json)
         return 2
 
 if __name__ == "__main__":

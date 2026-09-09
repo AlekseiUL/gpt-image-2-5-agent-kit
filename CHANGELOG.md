@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1 — 2026-09-09
+
+Reliability hardening after independent review of the 0.3.0 release.
+
+- Disable unused streamed partial previews; the CLI consumes only the final validated image.
+- Make the authenticated HTTP client scope explicit and test that the Bearer header is attached to that client.
+- Fully decode reference images before upload instead of accepting image signatures alone.
+- Persist a sanitized `error` receipt for live auth/backend failures when `--receipt` was requested.
+- Clarify that custom-size bounds are a conservative local compatibility policy, not a documented GPT Image 2.5 capability guarantee.
+- Add a clean wheel-install CLI smoke to CI.
+
 ## 0.3.0 — 2026-09-09
 
 GPT Image 2.5-only release under the `gpt-image-2-5-agent-kit` project name.

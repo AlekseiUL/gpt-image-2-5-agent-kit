@@ -11,7 +11,7 @@ The toolkit validates local requests and constructs an image-generation tool cal
 | Quality | `low`, `medium`, `high`, `xhigh`, `max`, `auto`; default `medium`. |
 | Aspect presets | `square`: requests `1024x1024`; `landscape`: `1536x1024`; `portrait`: `1024x1536`. |
 | Explicit size | `--size auto` or `WIDTHxHEIGHT`; overrides `--aspect`. |
-| Custom dimensions | Positive multiples of 16; neither edge above 3840; long/short ratio at most 3; 655,360–8,294,400 pixels total. |
+| Custom dimensions | Conservative local compatibility bounds: positive multiples of 16; neither edge above 3840; long/short ratio at most 3; 655,360–8,294,400 pixels total. Passing local validation is not proof of GPT Image 2.5/backend support. |
 | Background | `opaque`, `transparent`, `auto`; default `opaque`. Explicit transparency is rejected with JPEG. |
 | Output format | `png`, `jpeg`, `webp`; default `png`. The output extension must match the selected format. |
 | Compression | Integer 0–100, JPEG/WebP only. Omit for PNG. This is a backend encoding option, separate from model quality. |
@@ -21,7 +21,7 @@ The toolkit validates local requests and constructs an image-generation tool cal
 
 Sunburst's editing focus and Flare's everyday-generation focus come from the [Sunburst model page](https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst) and [Flare model page](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare). These sources also list the six quality settings.
 
-The [official image-generation guide](https://developers.openai.com/api/docs/guides/image-generation) documents custom dimensions, PNG/JPEG/WebP, compression and transparency. It marks resolutions above `2560x1440` experimental. Requested dimensions are not independent evidence of actual dimensions; inspect the decoded output metadata before export.
+The [official image-generation guide](https://developers.openai.com/api/docs/guides/image-generation) documents PNG/JPEG/WebP, compression and transparency for GPT Image. Its explicit arbitrary-size constraint block is currently presented for an earlier model, not as a GPT Image 2.5 guarantee. The toolkit therefore treats its size envelope as local policy only. Requested dimensions are not independent evidence of actual dimensions; inspect decoded output metadata before export.
 
 ## Inputs, roles and masks
 
@@ -40,7 +40,7 @@ Roles describe how to use an input; they do not select models automatically, gra
 
 ## Completion and evidence
 
-The live client requires a successful completed response before accepting image output. It validates the full image by decoding it and checks the decoded format against the requested format. Partial stream data, failed terminal responses and corrupt output do not become successful files. Writes are atomic, with no-overwrite protection unless `--overwrite` is explicit. The client does not automatically retry or fall back to another image model.
+The live client fully decodes references before upload and requires a successful completed response before accepting image output. It requests zero partial previews, decodes the final image and checks its format against the requested format. Partial stream data, failed terminal responses and corrupt output do not become successful files. Writes are atomic, with no-overwrite protection unless `--overwrite` is explicit. The client does not automatically retry or fall back to another image model. If `--receipt` is requested, live auth/backend failure persists a sanitized schema-valid `error` receipt.
 
 Receipts distinguish requested configuration from decoded output metadata. An `image_model` field records the submitted selection; it does not attest which model the backend executed unless separate evidence establishes that. A successful call only demonstrates the exact combination used on that account at that time.
 

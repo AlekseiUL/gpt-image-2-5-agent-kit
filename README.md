@@ -9,7 +9,7 @@
 
 A local toolkit for agents and operators working with **GPT Image 2.5 Sunburst and Flare**. Build a prompt, assign reference roles, inspect a dry-run, generate or edit an image, and keep a receipt of the request and resulting file.
 
-**Unofficial community toolkit. Not affiliated with, endorsed by, or sponsored by OpenAI.** Version **0.3.0** uses the `gpt-image25-agent` command and `gpt_image25_agent` Python package. Earlier image models are excluded from execution.
+**Unofficial community toolkit. Not affiliated with, endorsed by, or sponsored by OpenAI.** Version **0.3.1** uses the `gpt-image25-agent` command and `gpt_image25_agent` Python package. Earlier image models are excluded from execution.
 
 Live calls use an experimental ChatGPT/Codex backend with your own compatible access. An official OpenAI API backend is **not implemented**. Model availability in the official API does not establish availability through this subscription route; access, limits and supported options may differ. This is not a hosted service or a source of free/unlimited access.
 
@@ -53,7 +53,7 @@ Use `--json` instead of `--review-markdown` for an agent-readable plan. Review t
 
 Sunburst is the default for this reference/edit toolkit. OpenAI positions [Sunburst for precise editing](https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst) and [Flare for fast everyday generation](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare).
 
-Custom dimensions use multiples of 16, an aspect ratio between 1:3 and 3:1, edges up to 3840 pixels, and 655,360–8,294,400 pixels total. Resolutions above `2560x1440` are experimental in the [official image guide](https://developers.openai.com/api/docs/guides/image-generation). Requested dimensions and decoded output dimensions are recorded separately; inspect the returned file before using it in an exact-size layout.
+The toolkit applies conservative local bounds to custom dimensions: multiples of 16, an aspect ratio between 1:3 and 3:1, edges up to 3840 pixels, and 655,360–8,294,400 pixels total. These bounds are a compatibility policy inherited from documented earlier-model constraints, **not** proof that GPT Image 2.5 or the experimental subscription backend accepts every matching size. Requested dimensions and decoded output dimensions are recorded separately; inspect the returned file before using it in an exact-size layout.
 
 The [capability reference](docs/capabilities.md) separates exposed options, local validation and backend support. A flag appearing in the CLI is not a claim that every account/provider accepts it.
 
@@ -134,11 +134,11 @@ gpt-image25-agent "clean product hero, no text" \
   --out generated/hero.png --receipt generated/hero.receipt.json
 ```
 
-Live mode uploads the final prompt, selected references and any mask. The toolkit waits for a successful completed response, decodes the full output and writes the validated file atomically. Partial streams and corrupt files are not successful results. Existing outputs require `--overwrite`; the default also protects against a file appearing during the request. There is no automatic retry or switch to another image model. Each live invocation produces one image; for an authorized series, run one attempt per requested asset rather than retrying or silently restarting the batch.
+Live mode uploads the final prompt, selected references and any mask. References and final output are fully decoded before acceptance. The toolkit requests no partial previews, waits for a successful completed response and writes the validated final file atomically. Partial streams and corrupt files are not successful results. Existing outputs require `--overwrite`; the default also protects against a file appearing during the request. There is no automatic retry or switch to another image model. Each live invocation produces one image; for an authorized series, run one attempt per requested asset rather than retrying or silently restarting the batch. If `--receipt` is supplied, a live auth/backend failure writes a sanitized `error` receipt without raw error details or tokens.
 
 ## Verification status
 
-**0.3.0 verified on 2026-09-09:** 269 offline tests pass. Real Sunburst generation and Flare reference-based editing each succeeded on the first attempt through this toolkit, and both images were decoded and visually inspected. See the [release evidence and images](docs/release-validation-0.3.0.md).
+**0.3.1 offline hardening verified on 2026-09-09:** 271 offline tests pass, including full reference decoding, authenticated-client wiring, zero partial previews and schema-valid error-receipt persistence. The 0.3.0 real Sunburst generation and Flare reference-based edit evidence remains valid for that exact release and option set; no additional paid request was made for 0.3.1. See the [0.3.0 release evidence and images](docs/release-validation-0.3.0.md).
 
 The live checks used opaque PNG, high/medium quality and a requested `1536x864` canvas; both returned `1672x941`. Masks, transparent output, JPEG/WebP, compression and other quality/size combinations have offline validation and payload tests, but were not exercised against the live backend in this release.
 
@@ -160,7 +160,7 @@ python -m gpt_image25_agent --help
 
 ## По-русски
 
-Версия **0.3.0** — набор для GPT Image 2.5 с новой командой `gpt-image25-agent`. По умолчанию Sunburst; Flare выбирается явно. Старые модели удалены из рабочего маршрута.
+Версия **0.3.1** — набор для GPT Image 2.5 с командой `gpt-image25-agent`. По умолчанию Sunburst; Flare выбирается явно. Старые модели удалены из рабочего маршрута. Референсы полностью декодируются до отправки, неиспользуемые partial previews отключены, а запрошенный receipt фиксирует и live-сбой без секретов.
 
 Есть dry-run, роли референсов, сохранённые identity/style packs, точный текст, правки с `--preserve` и маской, PNG/JPEG/WebP, прозрачный фон и отчёты. Сначала проверьте план:
 

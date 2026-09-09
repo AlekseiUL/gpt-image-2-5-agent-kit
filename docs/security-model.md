@@ -9,7 +9,7 @@ This is a local CLI for an operator who controls the machine and files under `--
 - Output symlinks and resolved parent-path escapes are blocked.
 - Existing output files require `--overwrite`. The final write also enforces no-overwrite protection if a file appears while the request is running.
 - Generated files are accepted only after successful response completion, full image decoding and format validation, then written atomically. Partial streams, image signatures without valid content and failed responses are not successful outputs.
-- References and masks are checked before upload. Masks require a valid alpha PNG of the edit base's dimensions with a transparent edit region.
+- References are checked by extension/signature and fully decoded before upload. Masks require a valid alpha PNG of the edit base's dimensions with a transparent edit region.
 - Earlier or unknown image models are rejected. There is no automatic retry or model fallback.
 
 ## Saved packs and receipts

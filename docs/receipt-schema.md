@@ -2,7 +2,7 @@
 
 Machine-readable schema: [`schemas/receipt.v1.schema.json`](../schemas/receipt.v1.schema.json). Receipts record a requested operation and, after success, metadata about the resulting file.
 
-The schema ID remains `gpt-image2-agent.receipt.v1` for saved-data compatibility. This identifier is not a model selector. Older receipts remain historical records; execution in 0.3.0 allows only Sunburst and Flare.
+The schema ID remains `gpt-image2-agent.receipt.v1` for saved-data compatibility. This identifier is not a model selector. Older receipts remain historical records; execution from 0.3.0 onward allows only Sunburst and Flare.
 
 ## Privacy
 
@@ -52,4 +52,4 @@ The following is an illustrative plan, with a placeholder hash:
 
 Optional metadata includes compression, reference roles and edit/mask details as available. The newer fields extend schema v1 without making historical receipts require metadata they could not have recorded. Check the JSON Schema for field-level definitions.
 
-A `planned` receipt means local validation succeeded; it does not prove model access or backend support. A live success requires a completed response and a validated output file. Compare the requested settings with `actual_output`, and inspect the image itself for content, spelling and preservation requirements. See [capabilities](capabilities.md).
+A `planned` receipt means local validation succeeded; it does not prove model access or backend support. A live success requires a completed response and a validated output file. From 0.3.1, when `--receipt` is requested and live auth/backend execution fails after planning, the CLI writes `status: error` plus a sanitized `error_class`; raw backend error text and credentials are not stored. Compare successful requested settings with `actual_output`, and inspect the image itself for content, spelling and preservation requirements. See [capabilities](capabilities.md).

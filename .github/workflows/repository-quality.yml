@@ -24,5 +24,13 @@ jobs:
         run: python -m ruff check src tests scripts
       - name: Build distributions
         run: python -m build
+      - name: Clean wheel install smoke
+        run: |
+          python -m venv /tmp/gpt-image25-wheel-smoke
+          /tmp/gpt-image25-wheel-smoke/bin/python -m pip install --disable-pip-version-check dist/*.whl
+          /tmp/gpt-image25-wheel-smoke/bin/python -m pip check
+          cd /tmp
+          /tmp/gpt-image25-wheel-smoke/bin/gpt-image25-agent "offline wheel smoke" --dry-run --json > /tmp/gpt-image25-wheel-smoke.json
+          /tmp/gpt-image25-wheel-smoke/bin/python -c 'import json; data=json.load(open("/tmp/gpt-image25-wheel-smoke.json")); assert data["success"] is True and data["dry_run"] is True'
       - name: Syntax and privacy scan
         run: python scripts/repository_quality.py

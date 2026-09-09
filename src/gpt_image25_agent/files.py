@@ -111,11 +111,13 @@ def validate_refs(refs: list[Path], *, root: Path, allow_outside: bool) -> list[
             raise PolicyError(f"Reference image not found: {path}")
         if path.suffix.lower() not in IMAGE_EXTS:
             raise PolicyError(f"Unsupported reference image extension: {path}. Use png/jpg/webp.")
-        image_kind_from_bytes(path)
+        image_kind = image_kind_from_bytes(path)
         size = path.stat().st_size
         if size > MAX_REF_BYTES:
             raise PolicyError(f"Reference too large: {path} ({size} bytes > {MAX_REF_BYTES})")
         total += size
+        decoded = _decode_image(path.read_bytes(), expected_format=image_kind, label="Reference image")
+        decoded.close()
         resolved.append(path)
     if total > MAX_REFS_TOTAL_BYTES:
         raise PolicyError(f"reference images total too large: {total} bytes > {MAX_REFS_TOTAL_BYTES}")
@@ -123,7 +125,8 @@ def validate_refs(refs: list[Path], *, root: Path, allow_outside: bool) -> list[
 
 
 def image_kind_from_bytes(path: Path) -> str:
-    header = path.read_bytes()[:16]
+    with path.open("rb") as handle:
+        header = handle.read(16)
     if header.startswith(b"\x89PNG\r\n\x1a\n"):
         return "png"
     if header.startswith(b"\xff\xd8\xff"):
