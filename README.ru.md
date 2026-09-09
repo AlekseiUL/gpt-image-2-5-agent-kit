@@ -227,3 +227,12 @@ gpt-image25-agent "Обложка без текста" \
 Реальные тесты Sunburst и Flare относятся к набору параметров, зафиксированному в [отчёте 0.3.0](docs/release-validation-0.3.0.md). Для документационного обновления дополнительный платный запрос не выполнялся.
 
 Проект распространяется по лицензии MIT. Это независимый набор инструментов сообщества, не связанный с OpenAI и не одобренный OpenAI.
+
+## Автор и полезные ссылки
+
+Проект поддерживает Aleksei Ulianov / Sprut_AI. Канонический репозиторий: [gpt-image-2-5-agent-kit](https://github.com/AlekseiUL/gpt-image-2-5-agent-kit).
+
+- [YouTube](https://youtube.com/@alekseiulianov)
+- [Telegram-канал Sprut AI](https://t.me/Sprut_AI)
+- [Чат Telegram-канала Sprut AI](https://t.me/+eH-qNIDmud8zNDZi)
+- [AI Операционка](https://t.me/tribute/app?startapp=sJyg)
