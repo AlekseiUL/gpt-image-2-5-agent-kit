@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.2 — unreleased
+
+- Include the accepted main-branch remediation since the prior published tag.
+- Pin CI Actions to verified commits and add review-first dependency maintenance.
+- Re-run offline regression and clean artifact installation before publication.
+
+
 ## Unreleased
 
 - Add a standalone Russian product guide covering the toolkit's inputs, components, execution flow, model choice, common workflows, validation and limits.
