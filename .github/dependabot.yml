@@ -6,8 +6,16 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 5
+  groups:
+    actions-compatible:
+      patterns: ['*']
+      update-types: [minor, patch]
 - package-ecosystem: pip
   directory: /
   schedule:
     interval: weekly
   open-pull-requests-limit: 5
+  groups:
+    test-tools-compatible:
+      patterns: ['pytest', 'ruff', 'build', 'setuptools', 'wheel']
+      update-types: [minor, patch]

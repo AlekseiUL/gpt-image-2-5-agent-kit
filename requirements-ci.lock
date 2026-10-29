@@ -64,7 +64,7 @@ rpds-py==2026.9.1 ; python_full_version >= '3.11'
     # via
     #   jsonschema
     #   referencing
-ruff==0.16.6
+ruff==0.17.2
     # via gpt-image-2-5-agent-kit (pyproject.toml)
 tomli==2.5.0 ; python_full_version < '3.11'
     # via
