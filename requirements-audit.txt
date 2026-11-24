@@ -1,7 +1,7 @@
 anyio==4.15.1
 attrs==26.1.0
 build==1.6.1
-certifi==2026.10.23
+certifi==2026.11.20
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
